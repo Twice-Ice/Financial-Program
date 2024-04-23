@@ -1,0 +1,31 @@
+accounts = [
+	total,
+
+]
+
+inputed accounts:
+	IRA,
+	savings,
+		rent,
+		services
+
+IRA and savings are created and maybe their parent account is set here. Then a percent?
+But then you can't handle the input type that would have different percentages?
+
+
+total contains all other accounts and is default
+
+IRA is a single account that doesn't contain other accounts
+
+savings is a sum value of rent and services
+
+paymentTypes = [
+	default = payment([["IRA", 50], ["savings", 50]])
+	notDefault = payment([["IRA", 25], ["savings", 75]])
+]
+
+savings.setSplit([["rent", 50], ["services", 50]])
+
+each account stores a value,
+total is the default account and stores the sum of all combined accounts
+
