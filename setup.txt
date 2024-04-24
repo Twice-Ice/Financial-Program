@@ -1,0 +1,115 @@
+CLASSES
+	Accounts
+		stores a money value and can take inputed money values.
+
+	Container
+		stores one or multiple accounts and splits values inputed into it into multiple percentages to pass to the accounts
+
+	Input/Money Types
+		determines how to divide up the inputed money and how it is divided up between the accounts/containers
+
+
+INPUT EXAMPLE
+	:What would you like to do?
+	deposit
+	:Which Money Type would you like to use?
+		[Default, Artlab]
+	default
+	:How much money is being deposited?
+	100
+	: #displays the last 10 cases
+	|    Date    | Input | Output | Account | Total | IRA | Misc |
+	| 12/19/2023 |  $100 |        | Default |  $100 | $50 |  $50 |
+	|  2/23/2024 |       |   $50  |   IRA   |   $50 |  $0 |  $50 |
+	|- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -| #separates the older information from the inputed and newest cases
+	|  4/24/2024 |  $100 |        | Default |  $150 | $50 | $100 |
+
+
+	:What would you like to do?
+	display
+	:Which account would you like to display?
+		[Total, IRA, Misc]
+	IRA
+	:How much would you like to display? 
+	\n(Leave blank to display all)
+	
+	:
+	|    Date   | Input | Input Type | IRA |
+	| 4/24/2024 |  $100 |   Default  | $50 |
+
+
+	:What would you like to do?
+	display
+	:Which account would you like to display?
+		[Total, IRA, Misc, Personal]
+	Misc
+	:How much would you like to display? 
+	\n(Leave blank to display all)
+	
+	:
+	|    Date   | Input | Input Type | Misc | Personal |
+	| 4/24/2024 |  $100 |   Default  |  $50 |    $0    |
+
+
+	:What would you like to do?
+	withdraw
+	:Which account would you like to withdraw from?
+		[IRA, Misc] #cannot withrdaw from containers as those are abstractions to display data rather than accounts themselves.
+	IRA
+	:How much would is being withdrawn?
+	50
+	: #displays the last 10 cases
+	|    Date    | Input | Output | Account | Total | IRA | Misc |
+	| 12/19/2023 |  $100 |        | Default |  $100 | $50 |  $50 |
+	|  2/23/2024 |       |   $50  |   IRA   |   $50 |  $0 |  $50 |
+	|  4/24/2024 |  $100 |        | Default |  $150 | $50 | $100 |
+	|- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -| #separates the older information from the inputed and newest cases
+	|  4/25/2024 |       |   $50  |   IRA   |  $100 |  $0 | $100 |
+
+
+	:What would you like to do?
+	create
+	:What would you like to create?
+	account
+	:What is the account called?
+	Personal
+	:Where is Personal contained?
+		(Leave blank to do the default Total Container)
+		[Total, IRA, Misc] #all accounts and containers
+	
+	:
+	|    Date    | Input | Output | Account | Total | IRA | Misc | Personal |
+	| 12/19/2023 |  $100 |        | Default |  $100 | $50 |  $50 |    $0    |
+	|  2/23/2024 |       |   $50  |   IRA   |   $50 |  $0 |  $50 |    $0    |
+	|  4/24/2024 |  $100 |        | Default |  $150 | $50 | $100 |    $0    |
+
+
+	:What would you like to do?
+	create
+	:What would you like to create?
+	account
+	:What is the account called?
+	Personal
+	:Where is Personal contained?
+		(Leave blank to do the default Total Container)
+		[Total, IRA, Misc] #all accounts and containers
+	Misc
+	:Please redefine the percentages for Misc.
+	#asks for the percent for each account stored in Misc. If at the end of it, the percentages != 100% then you redo it.
+	#or some sort of system where you're given a list of all the options and can choose which ones to edit their values.
+		#then only once the total percentages == 100% then you can move on.
+	```
+	sumVal = 0
+	Misc.percentages = []
+	for i in range(len(Misc.accounts)):
+		percent = (int(input(f"What percent would you like to go to {case}?"))/100)
+		sumVal += percent
+		Misc.percentages.append(percent)
+	if sumVal != 100:
+		raise NOT 100%!!!
+	```
+	: #doesn't display Personal because it is stored within 
+	|    Date    | Input | Output | Account | Total | IRA | Misc |
+	| 12/19/2023 |  $100 |        | Default |  $100 | $50 |  $50 |
+	|  2/23/2024 |       |   $50  |   IRA   |   $50 |  $0 |  $50 |
+	|  4/24/2024 |  $100 |        | Default |  $150 | $50 | $100 |
