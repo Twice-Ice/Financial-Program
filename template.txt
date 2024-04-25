@@ -29,3 +29,18 @@ savings.setSplit([["rent", 50], ["services", 50]])
 each account stores a value,
 total is the default account and stores the sum of all combined accounts
 
+
+
+$1000 gift 100% -> spending money acct
+$1000 defualt 50% IRA 50% misc
+
+
+
+
+look up google spreadsheets api
+
+set up html site to display with the api
+
+set up javascript for revised input system
+
+priority 1 set up google sheets api and run through python
