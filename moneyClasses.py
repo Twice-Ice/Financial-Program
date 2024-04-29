@@ -25,9 +25,9 @@ class Account:
 		return str(self.val)
 	
 class Container:
-	def __init__(self, name : str = "None", accountsList : list = []):
+	def __init__(self, name : str = "None", containerList : list = []):
 		self.name = name
-		self.accountsList = accountsList
+		self.containerList = containerList #since accounts and containers should be treated very similarly, they are held within the same container list
 
 	def addVal(self, change):
 		if change >= 0:
@@ -47,3 +47,6 @@ class Container:
 		for account in self.accountsList:
 			totalPercent += account.percent
 		return totalPercent
+	
+	def newAccount(self, account):
+		self.containerList.append(account)

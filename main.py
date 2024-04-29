@@ -1,11 +1,10 @@
 import os
 from moneyClasses import Account
+from controller import ControllerInstance
 
 doExit = False
 
-def init():
-	pass
+controller = ControllerInstance()
 
-init()
 while not doExit:
-	pass
+	controller.update()
