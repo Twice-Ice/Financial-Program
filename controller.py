@@ -1,18 +1,23 @@
 from moneyClasses import Account, Container
 
-def printContainers(containerList):
-	returnStr = "["
-	for container in containerList:
-		if type(container) == Account:
-			returnStr += f"{container.name}, "
-		elif type(container) == Container:
+def printContainers(item):
+	returnStr = ""
+	if type(item) == Account:
+		returnStr += f"{item.name}, "
+	elif type(item) == Container:
+		# returnStr += "["
+		for container in item.containerList:
 			returnStr += f"{printContainers(container)}"
-	return returnStr
+		# returnStr += "]"
+	
+	return f"{returnStr}"
 		
 class ControllerInstance:
 	def __init__(self):
-		self.containerList = [Container("Total")]
-		self.containerList[0].newAccount(Account("testAccount!"))
+		self.total = Container("Total")
+		self.total.newAccount(Account("testAccount!"))
+		self.total.newAccount(Account("testAccount!!"))
+		self.total.newAccount(Account("testAccount!!!!"))
 
 	def update(self):
 		command = input("What would you like to do?\n")
@@ -37,7 +42,15 @@ class ControllerInstance:
 
 	def deposit(self):
 		print("Which account would you like to deposit into?")
-		printContainers(self.containerList)
+		print(f"{printContainers(self.total)}\n")
+		accountName = input()
+		nameList = []
+		for container in self.total.containerList:
+			nameList.append(container.name)
+		try:
+			self.total.containerList[nameList.index(accountName)].changeVal(input("How much would you like to deposit?"))
+		except:
+			print(f"{accountName} is not a valid option")
 
 	def withdraw(self):
 		pass
@@ -49,4 +62,4 @@ class ControllerInstance:
 		pass
 
 	def temp(self):
-		print(printContainers(self.containerList))
+		print(printContainers(self.total))
