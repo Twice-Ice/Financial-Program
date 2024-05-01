@@ -68,22 +68,27 @@ class ControllerInstance:
 		pass
 
 	def create(self):
+		#creates an account or container based on the user's choice
 		command = input("Would you like to create an account or a container?\n")
 		match str.lower(command):
 			case "account":
 				self.acctList.append(Account(input("What would you like to call this account?\n")))
 			case "container":
+				#When creating a container, the user MUST define which accounts or other containers get money from this container.
 				container = Container(input("What would you like to call this container?\n"))
 				self.containerPercentage(container)
+				#only after defining those values, is the container added to the container list.
 				self.contList.append(container)
 			case _:
 				print(f"I'm sorry, {command} is not an option.")
 
 	def containerPercentage(self, container : Container):
+		#this function allows for the name and percent of accounts/containers to be defined within the container's own system.
 		name = input(f"What account or container would you like to add into {container.name}?\n")
 		percent = input(f"What percent would you like this item to recieve when money is depositied into {container.name}?\n")
 		container.itemList.append([name, percent])
 		command = input(f"Would you like to add another item to {container.name}'s acctList? (y/n)\n")
+		#this function is recursive and can be called as many times as the user wants to use it.
 		match str.lower(command):
 			case "y":
 				self.containerPercentage(container)

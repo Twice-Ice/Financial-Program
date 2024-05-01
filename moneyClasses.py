@@ -25,9 +25,9 @@ class Account:
 		return str(self.val)
 	
 class Container:
-	def __init__(self, name : str = "None", itemList : list = []):
+	def __init__(self, name : str = "None"):
 		self.name = name
-		self.itemList = itemList #should contain a 2d list of [name, percent]
+		self.itemList = [] #should contain a 2d list of [name, percent]
 
 	def addVal(self, change, accts : list):
 		change = int(change)
