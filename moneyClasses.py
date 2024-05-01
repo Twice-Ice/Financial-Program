@@ -25,9 +25,9 @@ class Account:
 		return str(self.val)
 	
 class Container:
-	def __init__(self, name : str = "None", acctList : list = []):
+	def __init__(self, name : str = "None", itemList : list = []):
 		self.name = name
-		self.acctList = acctList #should contain a 2d list of [name, percent]
+		self.itemList = itemList #should contain a 2d list of [name, percent]
 
 	def addVal(self, change, accts : list):
 		change = int(change)
@@ -39,13 +39,13 @@ class Container:
 				namesList.append(account.name)
 
 			#checks all of the names in this container's list of names + percentages.
-			for i in range(len(self.acctList)):
-				name = self.acctList[0]
-				percent = self.acctList[1]
+			for i in range(len(self.itemList)):
+				name = self.itemList[i][0]
+				percent = float(self.itemList[i][1])
 				if name in namesList:
 					#if the name is in the list (all of these names should be), then the account there 
 	 				#should have it's value changed based on change and the account's percentage in this container.
-					accts[accts.index(name)].addVal(change * percent)
+					accts[namesList.index(name)].addVal(change * percent)
 				else:
 					#just in case
 					raise NameError(f"{name} isn't in the accounts list! :(")
@@ -70,4 +70,4 @@ class Container:
 		return totalPercent
 	
 	def newAccount(self, account):
-		self.acctList.append(account)
+		self.itemList.append(account)

@@ -24,6 +24,8 @@ class ControllerInstance:
 				self.display()
 			case "temp":
 				self.temp()
+			case "edit":
+				pass
 			case _:
 				print(f"{command} is not a valid option! Type help to see all available commands.")
 
@@ -56,7 +58,7 @@ class ControllerInstance:
 
 		#if the name is valid, then a value is added to the container named as so.
 		if name in contNames:
-			self.contList[contNames.index(name)].addVal(input(f"How much would you like to deposit into {name}?\n"))
+			self.acctList = self.contList[contNames.index(name)].addVal(input(f"How much would you like to deposit into {name}?\n"), self.acctList)
 		elif name in acctNames:
 			self.acctList[acctNames.index(name)].addVal(input(f"How much would you like to deposit into {name}?\n"))
 		else:
@@ -71,10 +73,24 @@ class ControllerInstance:
 			case "account":
 				self.acctList.append(Account(input("What would you like to call this account?\n")))
 			case "container":
-				self.contList.append(Container(input("What would you like to call this container?\n")))
-				#need to set up getting the percentages and chosen accounts selectable as options.
+				container = Container(input("What would you like to call this container?\n"))
+				self.containerPercentage(container)
+				self.contList.append(container)
 			case _:
 				print(f"I'm sorry, {command} is not an option.")
+
+	def containerPercentage(self, container : Container):
+		name = input(f"What account or container would you like to add into {container.name}?\n")
+		percent = input(f"What percent would you like this item to recieve when money is depositied into {container.name}?\n")
+		container.itemList.append([name, percent])
+		command = input(f"Would you like to add another item to {container.name}'s acctList? (y/n)\n")
+		match str.lower(command):
+			case "y":
+				self.containerPercentage(container)
+			case "n":
+				return
+			case _:
+				print(f"{command} wasn't an option, so this is interpreted as a No.")
 
 	def display(self):
 		pass
