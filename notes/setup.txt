@@ -9,6 +9,38 @@ CLASSES
 		determines how to divide up the inputed money and how it is divided up between the accounts/containers
 
 
+NOTES
+	Maybe accounts are held arbitarily by the controller instance as a list of all accounts.
+	And then containers are simply just ways to input money into each account at a certain rate.
+
+                        50%   50%        %50  %50
+	ACCOUNTS = (Savings[IRA, IRA2], FUN[Misc, HRT])
+
+	By default, you would always have the following output to start:
+	|   Date   | Input | Output | Account | etc.
+	|- -- -- -- -- -- -- -- -- -- -- -- --  etc.
+	| 5/2/2024 |  $100 |        | Savings | etc.
+
+	Displaying could be done like so by default, only displaying the containers stored within Total.
+	|   Date   | Input | Output | Account | Total | Savings |  FUN  |
+	|          |       |        |         |       |  50.0%  | 50.0% |
+	|- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -|
+	| 5/2/2024 |  $100 |        | Savings |  $100 |   $100  |   $0  |
+
+	And then you could choose to display the inside of a specific container.
+	the container should be destinguished somehow, in this case, with brackets.
+	|   Date   | Input | Output | Account | Savings |  IRA  |  IRA2  |
+	|          |       |        |         |         | 50.0% |  50.0% | #percentages go here with a decimal when a container is printed. 
+	|- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --|
+	| 5/2/2024 |  $100 |        | Savings |   $100  |  $50  |   $50  |
+
+	And if the chosen display item is just an account, then it display's like so, only to show the account that is desired. 
+	(ofc, plus the default output information)
+	|   Date   | Input | Output | Account | HRT |
+	|- -- -- -- -- -- -- -- -- -- -- -- -- -- --|
+	| 5/2/2024 |  $100 |        |   FUN   | $50 |
+
+
 INPUT EXAMPLE
 	:What would you like to do?
 	deposit
@@ -19,6 +51,7 @@ INPUT EXAMPLE
 	100
 	: #displays the last 10 cases
 	|    Date    | Input | Output | Account | Total | IRA | Misc |
+	|- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -|
 	| 12/19/2023 |  $100 |        | Default |  $100 | $50 |  $50 |
 	|  2/23/2024 |       |   $50  |   IRA   |   $50 |  $0 |  $50 |
 	|- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -| #separates the older information from the inputed and newest cases
@@ -35,6 +68,7 @@ INPUT EXAMPLE
 	
 	:
 	|    Date   | Input | Input Type | IRA |
+	|- -- -- -- -- -- -- -- -- -- -- -- -- |
 	| 4/24/2024 |  $100 |   Default  | $50 |
 
 
@@ -48,6 +82,7 @@ INPUT EXAMPLE
 	
 	:
 	|    Date   | Input | Input Type | Misc | Personal |
+	|- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- |
 	| 4/24/2024 |  $100 |   Default  |  $50 |    $0    |
 
 
@@ -60,6 +95,7 @@ INPUT EXAMPLE
 	50
 	: #displays the last 10 cases
 	|    Date    | Input | Output | Account | Total | IRA | Misc |
+	|- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -|
 	| 12/19/2023 |  $100 |        | Default |  $100 | $50 |  $50 |
 	|  2/23/2024 |       |   $50  |   IRA   |   $50 |  $0 |  $50 |
 	|  4/24/2024 |  $100 |        | Default |  $150 | $50 | $100 |
@@ -79,6 +115,7 @@ INPUT EXAMPLE
 	
 	:
 	|    Date    | Input | Output | Account | Total | IRA | Misc | Personal |
+	|- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- |
 	| 12/19/2023 |  $100 |        | Default |  $100 | $50 |  $50 |    $0    |
 	|  2/23/2024 |       |   $50  |   IRA   |   $50 |  $0 |  $50 |    $0    |
 	|  4/24/2024 |  $100 |        | Default |  $150 | $50 | $100 |    $0    |
@@ -110,6 +147,7 @@ INPUT EXAMPLE
 	```
 	: #doesn't display Personal because it is stored within 
 	|    Date    | Input | Output | Account | Total | IRA | Misc |
+	|- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -|
 	| 12/19/2023 |  $100 |        | Default |  $100 | $50 |  $50 |
 	|  2/23/2024 |       |   $50  |   IRA   |   $50 |  $0 |  $50 |
 	|  4/24/2024 |  $100 |        | Default |  $150 | $50 | $100 |
