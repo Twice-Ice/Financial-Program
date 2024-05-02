@@ -159,4 +159,4 @@ class ControllerInstance:
 			print(f"{printStr} |")
 
 	def temp(self):
-		self.printContainers()
+		print(self.printContainers())
