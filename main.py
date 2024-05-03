@@ -11,5 +11,7 @@ print(time.date(), type(time))
 
 list = [i for i in range(10)]
 
+os.system("cls")
+
 while not doExit:
 	controller.update()

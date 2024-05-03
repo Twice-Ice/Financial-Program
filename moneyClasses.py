@@ -18,8 +18,8 @@ class Account:
 		# 	print(f"{percent} is not a valid value, please input numbers only.")
 		# 	self.setPercentage()
 
-	def addVal(self, change):
-		self.val += int(change)
+	def addVal(self, change : float):
+		self.val += float(change)
 
 	def printVal(self):
 		return str(self.val)
@@ -29,8 +29,8 @@ class Container:
 		self.name = name
 		self.itemList = [] #should contain a 2d list of [name, percent]
 
-	def addVal(self, change, accts : list):
-		change = int(change)
+	def addVal(self, change : float, accts : list):
+		change = float(change)
 		# if the change isn't negative
 		if change >= 0:
 			#define all the names of accounts for later use

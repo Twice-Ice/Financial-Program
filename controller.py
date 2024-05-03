@@ -6,10 +6,10 @@ class ControllerInstance:
 	def __init__(self):
 		self.acctList = []
 		self.contList = [Container("Total")]
-		self.history = [] #[[Date, Value, Account], etc.]
+		self.history = [[datetime.now(), 100, "Misc"]] #[[Date, Value, Account], etc.]
 		self.autoCreate("account", "HRT")
 		self.autoCreate("account", "personal")
-		self.autoCreate("Container", "Misc", [["HRT", .5], ["persona", .5]])
+		self.autoCreate("Container", "Misc", [["HRT", .5], ["personal", .5]])
 
 	def update(self):
 		command = input("\n\nWhat would you like to do?\n")
@@ -140,6 +140,9 @@ class ControllerInstance:
 			case _:
 				print(f"{command} wasn't an option, so this is interpreted as a No.")
 
+	"""
+		Displays the date, value, account deposited into, and data for where the money went/left from.
+	"""
 	def display(self):
 		printList = [["Date", "Value", "Account"]] #when printed out, value will be split up into input and output
 		for i in range(len(self.history)):
@@ -149,7 +152,7 @@ class ControllerInstance:
 			printStr = ""
 			for j in range(len(printList[i])):
 				item = printList[i][j]
-				if j > 0:
+				if i > 0:
 					if j == 0:
 						item = item.date()
 					elif j == 1:
@@ -157,6 +160,50 @@ class ControllerInstance:
 					
 				printStr += f"| {item} "
 			print(f"{printStr} |")
+
+		
+		#sets up lists to see if the chosen name is actually valid.
+		contNames = []
+		for cont in self.contList:
+			contNames.append(str.lower(cont.name))
+		acctNames = []
+		for acct in self.acctList:
+			acctNames.append(str.lower(acct.name))
+
+		printList = [["Date", "Input", "Output", "Account"]]
+		chosenAccount = input(f"What account would you like to view?\n{self.printContainers()}\n").lower()
+				
+		if chosenAccount in contNames or chosenAccount in acctNames:
+			printList[0].append(chosenAccount)
+		else:
+			print(f"{chosenAccount} isn't an avilable option.\n")
+			self.display()
+
+
+
+		for i in range(len(self.history)):
+			date = str(self.history[i][0].date())
+			if self.history[i][1] > 0:
+				inputVal = str(self.history[i][1])
+				outputVal = ""
+			elif self.history[i][1] < 0:
+				inputVal = ""
+				outputVal = str(self.history[i][1])
+			else:
+				inputVal = ""
+				outputVal = ""
+			account = self.history[i][2]
+
+			chosenAccountVal = self.acctList[acctNames.index(chosenAccount)].val
+			printList.append([date, inputVal, outputVal, account, chosenAccountVal])
+
+		for i in range(len(printList)):
+			printStr = ""
+			for j in range(len(printList[i])):
+				item = printList[i][j]
+				printStr += f"| {item} "
+			print(f"{printStr} |")
+
 
 	def temp(self):
 		print(self.printContainers())
