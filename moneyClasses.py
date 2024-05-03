@@ -5,6 +5,7 @@ class Account:
 		self.name = name
 		self.val = 0
 		self.percent = 1
+		self.history = []
 
 	def setPercentage(self, percent):
 		self.percent = percent/100
@@ -19,7 +20,8 @@ class Account:
 		# 	self.setPercentage()
 
 	def addVal(self, change : float):
-		self.val += float(change)
+		self.val += change
+		self.history.append(self.val)
 
 	def printVal(self):
 		return str(self.val)
@@ -29,7 +31,7 @@ class Container:
 		self.name = name
 		self.itemList = [] #should contain a 2d list of [name, percent]
 
-	def addVal(self, change : float, accts : list):
+	def addVal(self, change : float, accts : list) -> list: #accts is where all of the accounts are stored, so that they can be edited and returned.
 		change = float(change)
 		# if the change isn't negative
 		if change >= 0:

@@ -6,7 +6,7 @@ class ControllerInstance:
 	def __init__(self):
 		self.acctList = []
 		self.contList = [Container("Total")]
-		self.history = [[datetime.now(), 100, "Misc"]] #[[Date, Value, Account], etc.]
+		self.history = [] #[[Date, Value, Account], etc.]
 		self.autoCreate("account", "HRT")
 		self.autoCreate("account", "personal")
 		self.autoCreate("Container", "Misc", [["HRT", .5], ["personal", .5]])
@@ -79,7 +79,11 @@ class ControllerInstance:
 		if name in contNames:
 			self.acctList = self.contList[contNames.index(name)].addVal(value, self.acctList)
 		elif name in acctNames:
-			self.acctList[acctNames.index(name)].addVal(value)
+			for i in range(len(self.acctList)):
+				if i == acctNames.index(name):
+					self.acctList[acctNames.index(name)].addVal(value)
+				else:
+					self.acctList[i].addVal(0)
 
 	def withdraw(self):
 		pass
@@ -144,24 +148,6 @@ class ControllerInstance:
 		Displays the date, value, account deposited into, and data for where the money went/left from.
 	"""
 	def display(self):
-		printList = [["Date", "Value", "Account"]] #when printed out, value will be split up into input and output
-		for i in range(len(self.history)):
-			printList.append(self.history[i])
-
-		for i in range(len(printList)):
-			printStr = ""
-			for j in range(len(printList[i])):
-				item = printList[i][j]
-				if i > 0:
-					if j == 0:
-						item = item.date()
-					elif j == 1:
-						item = f"${item}"
-					
-				printStr += f"| {item} "
-			print(f"{printStr} |")
-
-		
 		#sets up lists to see if the chosen name is actually valid.
 		contNames = []
 		for cont in self.contList:
@@ -180,29 +166,106 @@ class ControllerInstance:
 			self.display()
 
 
-
+		#Sets up the rest of the printList statistics
 		for i in range(len(self.history)):
+			#The date in a displayable format, it is stored in datetime in case data manipulation is required without risking mixing up the order of all deposits.
 			date = str(self.history[i][0].date())
-			if self.history[i][1] > 0:
-				inputVal = str(self.history[i][1])
+
+			#Initializes inputVal and outputVal variables to properly display the money going in and out of all accounts.
+			money = self.history[i][1]
+			if money > 0:
+				inputVal = str(money)
 				outputVal = ""
-			elif self.history[i][1] < 0:
+			elif money < 0:
 				inputVal = ""
-				outputVal = str(self.history[i][1])
+				outputVal = str(money)
 			else:
 				inputVal = ""
 				outputVal = ""
+			
+			#The name of the account which was deposited to
 			account = self.history[i][2]
 
-			chosenAccountVal = self.acctList[acctNames.index(chosenAccount)].val
+			#The money stored in the account at a certain point in time.
+			chosenAccountVal = self.acctList[acctNames.index(chosenAccount)].history[i]
+
+			#Adds all of these stats to the list for later printing
 			printList.append([date, inputVal, outputVal, account, chosenAccountVal])
 
+		#prints all of the printList with the "|  |" on both sides of the variables.
 		for i in range(len(printList)):
 			printStr = ""
 			for j in range(len(printList[i])):
 				item = printList[i][j]
 				printStr += f"| {item} "
-			print(f"{printStr} |")
+			print(f"{printStr}|")
+
+
+
+	def nameLists(self, lower : bool = False) -> tuple[list, list]:
+		contNames = []
+		for cont in self.contList:
+			contNames.append(cont.name)
+		acctNames = []
+		for acct in self.acctList:
+			acctNames.append(acct.name)
+
+		if lower:
+			for i in range(len(contNames)):
+				contNames[i] = str.lower(contNames[i])
+			for i in range(len(acctNames)):
+				acctNames[i] = str.lower(acctNames[i])
+
+		return contNames, acctNames
+	
+	def chooseAccount(self, questionString) -> tuple[any, str]: 
+		chosenAccount = input(f"{questionString}\n{self.printContainers()}\n").lower()
+		contNames, acctNames = self.nameLists(True)
+
+		if chosenAccount in contNames:
+			return Account, chosenAccount
+		elif chosenAccount in acctNames:
+			return Container, chosenAccount
+		else:
+			print(f"{chosenAccount} isn't a valid option, please choose again.\n\n")
+			return self.chooseAccount()
+		
+	def question(self, questionStr : str, answerOptions : list = [], clearStart : bool = False) -> str:
+		if clearStart:
+			os.system("cls")
+		
+		command = input(questionStr)
+
+
+		for i in range(len(answerOptions)):
+			answerOptions[i] = str.lower(answerOptions[i])
+
+		if command.lower in answerOptions:
+			return command
+		else:
+			print(f"{command} is not a valid option.\n")
+			self.question(questionStr, answerOptions, False)
+
+	def display2(self):
+		contNames, acctNames = self.nameLists()
+
+		printList = ["Date", "Input", "Output", "Account"]
+
+		#gets the account that the user would like to choose
+		itemType, chosenAccount = self.chooseAccount("What account would you like to view?")
+		# self.question("Would you like to view another account? (y/n)", ["y", "n"], clearStart = True)
+
+		#adds the chosen account to the printList, including all accounts within the chosen item if it's a container.
+		if itemType == Account:
+			printList.append(chosenAccount)
+		elif itemType == Container:
+			#adds the container itself
+			printList.append(chosenAccount)
+			chosenContainer = self.contList[contNames.index(chosenAccount)]
+			#adds all items stored within the chosen container
+			for i in range(len(chosenContainer.itemList)):
+				printList.append(chosenContainer.itemList[i])
+
 
 
 	def temp(self):
