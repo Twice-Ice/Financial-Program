@@ -24,7 +24,7 @@ class ControllerInstance:
 			case "create":
 				self.create()
 			case "display":
-				self.display()
+				self.display2()
 			case "temp":
 				self.temp()
 			case "edit":
@@ -201,8 +201,11 @@ class ControllerInstance:
 			print(f"{printStr}|")
 
 
-
+	"""
+		returns valid lists of both containers and accounts.
+	"""
 	def nameLists(self, lower : bool = False) -> tuple[list, list]:
+		#defines the lists
 		contNames = []
 		for cont in self.contList:
 			contNames.append(cont.name)
@@ -210,46 +213,87 @@ class ControllerInstance:
 		for acct in self.acctList:
 			acctNames.append(acct.name)
 
+		#lowercases them if lower was set to True.
 		if lower:
 			for i in range(len(contNames)):
 				contNames[i] = str.lower(contNames[i])
 			for i in range(len(acctNames)):
 				acctNames[i] = str.lower(acctNames[i])
 
+		#returns both lists.
 		return contNames, acctNames
 	
+	"""
+		Allows the user to choose an account from all the possible account options.
+		If the user's choice isn't valid, then user is prompted to choose another account option.
+	"""
 	def chooseAccount(self, questionString) -> tuple[any, str]: 
+		#asks the user the prompting question, and then also displays all valid account options and lowercases the user's answer.
 		chosenAccount = input(f"{questionString}\n{self.printContainers()}\n").lower()
+		#defines all valid items into different lists already set to lowercase.
 		contNames, acctNames = self.nameLists(True)
 
-		if chosenAccount in contNames:
+		#detects if the user's choice was valid, and if it was, it returns the type of the item, and the name of the item chosen.
+		if chosenAccount in acctNames:
 			return Account, chosenAccount
-		elif chosenAccount in acctNames:
+		elif chosenAccount in contNames:
 			return Container, chosenAccount
 		else:
+			#if the choice wasn't valid, the user is told so, and then prompted to choose again.
 			print(f"{chosenAccount} isn't a valid option, please choose again.\n\n")
 			return self.chooseAccount()
-		
+	
+	"""
+		asks the user a question, along with a list of possible answer options. 
+		Then if the user says something that isn't an option, the question is asked again, otherwise, the user's answer is returned.
+	"""
 	def question(self, questionStr : str, answerOptions : list = [], clearStart : bool = False) -> str:
+		#if the screen should have been cleared upon this function call, then it will ahv ebeen cleared.
 		if clearStart:
 			os.system("cls")
 		
+		#prompts the user with the question
 		command = input(questionStr)
 
-
+		#all answers and answer options aren't case sensitive because they are all set to lowercase.
 		for i in range(len(answerOptions)):
 			answerOptions[i] = str.lower(answerOptions[i])
-
-		if command.lower in answerOptions:
+		
+		if command.lower() in answerOptions:
+			#answer was a valid option
 			return command
 		else:
-			print(f"{command} is not a valid option.\n")
+			#answer wasn't a valid option
+			print(f"{command} is not a valid option.\n\n")
+			#this will never have a True for clearStart because otherwise the user would never see the invalid option line.
 			self.question(questionStr, answerOptions, False)
+
+
+	"""
+		gets all relavant item info and returns it.
+		returns itemType, itemIndex.
+	"""
+	def getItemInfo(self, item) -> tuple[any, int]:
+		contNames, acctNames = self.nameLists(True)
+
+		if item in contNames:
+			return Container, contNames.index(item)
+		elif item in acctNames:
+			return Account, acctNames.index(item)
+		else:
+			# tempStr = ""
+			# for acct in self.acctList:
+			# 	tempStr += f"{acct.name}, "
+			# tempStr += "\n"
+			# for cont in self.contList:
+			# 	tempStr += f"{cont.name}, "
+			# print(tempStr)
+			raise NameError(f"{item} is not a valid item option")	
 
 	def display2(self):
 		contNames, acctNames = self.nameLists()
 
-		printList = ["Date", "Input", "Output", "Account"]
+		itemList = ["Date", "Input", "Output", "Account", "hrt"]
 
 		#gets the account that the user would like to choose
 		itemType, chosenAccount = self.chooseAccount("What account would you like to view?")
@@ -257,16 +301,64 @@ class ControllerInstance:
 
 		#adds the chosen account to the printList, including all accounts within the chosen item if it's a container.
 		if itemType == Account:
-			printList.append(chosenAccount)
+			itemList.append(chosenAccount)
 		elif itemType == Container:
 			#adds the container itself
-			printList.append(chosenAccount)
-			chosenContainer = self.contList[contNames.index(chosenAccount)]
+			itemList.append(chosenAccount)
+			chosenContainer = self.contList[contNames.index(chosenAccount.upper())]
 			#adds all items stored within the chosen container
 			for i in range(len(chosenContainer.itemList)):
-				printList.append(chosenContainer.itemList[i])
+				itemList.append(chosenContainer.itemList[i])
 
+		printList = []
+		#defines every input interaction case for all accounts with printList
+		for i in range(len(self.history)):
+			#The date in a displayable format, it is stored in datetime in case data manipulation is required without risking mixing up the order of all deposits.
+			date = str(self.history[i][0].date())
 
+			#Initializes inputVal and outputVal variables to properly display the money going in and out of all accounts.
+			money = self.history[i][1]
+			if money > 0:
+				inputVal = str(money)
+				outputVal = ""
+			elif money < 0:
+				inputVal = ""
+				outputVal = str(money)
+			else:
+				inputVal = ""
+				outputVal = ""
+			
+			#The name of the account which was deposited to
+			account = self.history[i][2]
+
+			#Adds all of these stats to the list for later printing
+			printList.append([date, inputVal, outputVal, account])
+
+		#defines the item values at each point in the history for every item after the default items in itemList.
+		for i in range(len(self.history)):
+			for j in range(4, len(itemList)):
+				itemType, itemIndex = self.getItemInfo(itemList[j])
+				if itemType == Account:
+					printList[i].append(self.acctList[itemIndex].history[i])
+				#need to set up containers.
+
+		#prints the name of each item being printed and then a dividing line
+		namesStr = ""
+		for i in range(len(itemList)):
+			namesStr += f"| {itemList[i]} "
+		namesStr += "|\n|"
+		for i in range(2, len(namesStr) - 2):
+			namesStr += "-"
+		namesStr += "|"
+		print(namesStr)
+
+		#prints all item information divided by bars like such: "|  |"
+		for i in range(len(printList)):
+			lineStr = ""
+			for j in range(len(printList[i])):
+				lineStr += f"| {printList[i][j]} "
+			lineStr += "|"
+			print(lineStr)
 
 	def temp(self):
 		print(self.printContainers())
