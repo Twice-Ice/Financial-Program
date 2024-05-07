@@ -1,11 +1,70 @@
 import os
 
+"""
+	An advanced list class for use cases within only this program  
+"""
+class ItemList:
+	def __init__(self):
+		self.list = []
+
+	"""
+		Returns a list of all the item names within the ItemList.list variable.
+
+		Can return the name list as a lowercase or  upper case based on the variables set upon calling the function.
+	"""
+	def getNameList(self, lower : bool = False, upper : bool = False) -> list:
+		#defines the base list
+		nameList = []
+		for i in range(len(self.list)):
+			nameList.append(self.list[i].name)
+
+		#lower/upper
+		if lower:
+			for i in range(len(nameList)):
+				nameList[i] = nameList[i].lower()
+		elif upper:
+			for i in range(len(nameList)):
+				nameList[i] = nameList[i].upper()
+
+		return nameList
+	
+	"""
+		Adds a new item to the list.
+	"""
+	def newItem(self, item):
+		self.list.append(item)
+
+	"""
+		Checks if an item is in the list and returns true or false if that is the case.
+
+		All itemNames will be uniformally understood without any worry about upper/lowercaseing.
+	"""
+	def itemInList(self, itemName):
+		nameList = self.getNameList(lower = True)
+
+		if itemName.lower() in nameList:
+			return True
+		else:
+			return False
+	
+	"""
+		returns if an item is in the lists, and an int index of where in self.list, "itemName" is located.
+	"""
+	def indexItem(self, itemName):
+		nameList = self.getNameList(lower = True)
+		if self.itemInList(itemName):
+			return nameList.index(itemName.lower())
+		else:
+			raise NameError("ayo for some reason this is causing a bug. Last time I worked on this, there was a workaround by returning a bool as well, but that system sucked so I got rid of it. GL with the bug though, future me.")
+
 class Account:
-	def __init__(self, name : str = "None"):
+	def __init__(self, name : str = "None", historyLen : int = 0):
 		self.name = name
 		self.val = 0
 		self.percent = 1
 		self.history = []
+		for i in range(historyLen):
+			self.addVal(0)
 
 	def setPercentage(self, percent):
 		self.percent = percent/100
@@ -31,23 +90,19 @@ class Container:
 		self.name = name
 		self.itemList = [] #should contain a 2d list of [name, percent]
 
-	def addVal(self, change : float, accts : list) -> list: #accts is where all of the accounts are stored, so that they can be edited and returned.
+	#adds a value to each account contained within the container, based on the container's itemList percentages.
+	def addVal(self, change : float, accts : ItemList) -> list: #accts is where all of the accounts are stored, so that they can be edited and returned.
 		change = float(change)
 		# if the change isn't negative
 		if change >= 0:
-			#define all the names of accounts for later use
-			namesList = []
-			for account in accts:
-				namesList.append(account.name)
-
 			#checks all of the names in this container's list of names + percentages.
 			for i in range(len(self.itemList)):
 				name = self.itemList[i][0]
 				percent = float(self.itemList[i][1])
-				if name in namesList:
+				if accts.itemInList(name):
 					#if the name is in the list (all of these names should be), then the account there 
 	 				#should have it's value changed based on change and the account's percentage in this container.
-					accts[namesList.index(name)].addVal(change * percent)
+					accts.list[accts.indexItem(name)].addVal(change * percent)
 				else:
 					#just in case
 					raise NameError(f"{name} isn't in the accounts list! :(")
@@ -58,13 +113,25 @@ class Container:
 			raise ValueError(f"Change, ({change}), must be larger than 0. Money can only be removed form accounts individually.")
 		
 	#need a function to edit self.acctList
-		
-	def printVal(self):
+	
+	"""
+		gets the sum value of a container by adding up all the values at a specific index in the history list.
+	"""
+	def getSum(self, contList :ItemList, acctList :ItemList, historyIndex = -1):
 		totalVal = 0
-		for account in self.accountsList:
-			totalVal += account.val
-		return str(totalVal)
+		
+		#loops through each item in the container's item list
+		for item in self.itemList:
+			if contList.itemInList(item[0]):
+				#if the item is a container, the sum of that container's items is added to the total.
+				totalVal += contList.list[contList.indexItem(item[0])].getSum(contList, acctList, historyIndex)
+			elif acctList.itemInList(item[0]):
+				#if the item is an account, the item's value at history[historyIndex] is added to the total Val.
+				#as eventually all container should only contain accounts, then it's ok to resolve all values in this half of the if statment.
+				totalVal += acctList.list[acctList.indexItem(item[0])].history[historyIndex]
 
+		return totalVal
+	
 	def getPercent(self):
 		totalPercent = 0
 		for account in self.accountsList:
