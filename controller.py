@@ -34,8 +34,8 @@ class ControllerInstance:
 				print(f"{command} is not a valid option! Type help to see all available commands.")
 
 		#updates history for all accounts, but not containers as those are updated any time a value is added to them.
-		for i in range(len(self.acctList.list)):
-			self.acctList.list[i].updateHistory()
+		# for i in range(len(self.acctList.list)):
+			# self.acctList.list[i].updateHistory()
 
 	"""
 		Prints all containers and accounts stored within the current instance of the application.
@@ -192,7 +192,6 @@ class ControllerInstance:
 			print(f"{command} is not a valid option.\n\n")
 			#this will never have a True for clearStart because otherwise the user would never see the invalid option line.
 			self.question(questionStr, answerOptions, False)
-
 
 	"""
 		gets all relavant item info and returns it.

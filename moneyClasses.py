@@ -80,8 +80,6 @@ class Account:
 
 	def addVal(self, change : float):
 		self.val += change
-
-	def updateHistory(self):
 		self.history.append(self.val)
 
 	def printVal(self):

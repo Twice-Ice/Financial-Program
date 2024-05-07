@@ -151,3 +151,23 @@ INPUT EXAMPLE
 	| 12/19/2023 |  $100 |        | Default |  $100 | $50 |  $50 |
 	|  2/23/2024 |       |   $50  |   IRA   |   $50 |  $0 |  $50 |
 	|  4/24/2024 |  $100 |        | Default |  $150 | $50 | $100 |
+
+
+DISPLAYING CONTS WITH CONTS INSIDE:
+
+	acct: hrt
+	acct: personal
+	cont: Total [[misc, .5], [hrt, .5]]
+	cont: misc  [[hrt, .5], [personal, .5]]
+
+	deposit 100 Total
+		misc = 50,			 	hrt = 50
+		hrt = 25, personal = 25, hrt = 50
+		SUM
+		hrt = 75, personal = 25
+
+	display misc
+		misc = 50, hrt = 75, personal = 25
+
+	display total
+		total = 100, misc = 50, hrt = 75
