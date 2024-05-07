@@ -80,6 +80,8 @@ class Account:
 
 	def addVal(self, change : float):
 		self.val += change
+
+	def updateHistory(self):
 		self.history.append(self.val)
 
 	def printVal(self):
@@ -89,11 +91,17 @@ class Container:
 	def __init__(self, name : str = "None"):
 		self.name = name
 		self.itemList = [] #should contain a 2d list of [name, percent]
+		self.history = []
 
 	#adds a value to each account contained within the container, based on the container's itemList percentages.
-	def addVal(self, change : float, accts : ItemList) -> list: #accts is where all of the accounts are stored, so that they can be edited and returned.
+	def addVal(self, change : float, accts : ItemList, conts : ItemList) -> tuple[ItemList, ItemList]: #accts is where all of the accounts are stored, so that they can be edited and returned.
 		change = float(change)
-		# if the change isn't negative
+		#applies the change to the history
+		if len(self.history) > 0:
+			self.history.append(self.history[len(self.history)-1] + change)
+		else: #if the history doesn't already have anything in it's list, then change is just applied to start the chain of events.
+			self.history.append(change)
+		#if the change isn't negative
 		if change >= 0:
 			#checks all of the names in this container's list of names + percentages.
 			for i in range(len(self.itemList)):
@@ -103,15 +111,27 @@ class Container:
 					#if the name is in the list (all of these names should be), then the account there 
 	 				#should have it's value changed based on change and the account's percentage in this container.
 					accts.list[accts.indexItem(name)].addVal(change * percent)
+				elif conts.itemInList(name):
+					conts.list[conts.indexItem(name)].addVal(change * percent, accts, conts)
 				else:
 					#just in case
-					raise NameError(f"{name} isn't in the accounts list! :(")
+					raise NameError(f"{name} isn't in either account or container list! :(")
 
 			#returns accts so that the values are all updated
-			return accts
+			return accts, conts
 		else:
 			raise ValueError(f"Change, ({change}), must be larger than 0. Money can only be removed form accounts individually.")
 		
+	"""
+		updates the history values for the container, value should be the controller history for the last entry.
+
+		for some reason, putting the update here really messed things up because detecting what the change was by calculating it made the system not work very well.
+		now the history is updated when a value is changed for the container class. This is not true for the Account class, where it's values are updated later to avoid cases where the value aren't detected properly.
+	"""
+	def updateHistory(self, contList : ItemList, acctList : ItemList, historyIndex : int = -1):
+		pass
+		# self.history.append(self.getSum(contList, acctList, historyIndex))
+
 	#need a function to edit self.acctList
 	
 	"""

@@ -9,7 +9,7 @@ class ControllerInstance:
 		self.history = [] #[[Date, Value, Account], etc.]
 		self.autoCreate("account", "HRT")
 		self.autoCreate("account", "personal")
-		self.autoCreate("Container", "Total", [["HRT", .5], ["personal", .5]])
+		self.autoCreate("Container", "Total", [["HRT", .5], ["Misc", .5]])
 		self.autoCreate("Container", "Misc", [["HRT", .5], ["personal", .5]])
 
 	def update(self):
@@ -32,6 +32,10 @@ class ControllerInstance:
 				pass
 			case _:
 				print(f"{command} is not a valid option! Type help to see all available commands.")
+
+		#updates history for all accounts, but not containers as those are updated any time a value is added to them.
+		for i in range(len(self.acctList.list)):
+			self.acctList.list[i].updateHistory()
 
 	"""
 		Prints all containers and accounts stored within the current instance of the application.
@@ -71,13 +75,16 @@ class ControllerInstance:
 		#if the name is valid, then a value is added to the container named as so.
 		if self.contList.itemInList(name):
 			index = self.contList.indexItem(name)
-			self.acctList = self.contList.list[index].addVal(value, self.acctList)
-			# self.acctList = self.contList[contNames.index(name.lower())].addVal(value, self.acctList)
+			for i in range(len(self.contList.list)):
+				if i == index:
+					self.acctList, self.contList = self.contList.list[index].addVal(value, self.acctList, self.contList)
+				else:
+					self.acctList, self.contList = self.contList.list[i].addVal(0, self.acctList, self.contList)
 		elif self.acctList.itemInList(name):
 			#adds the value to only the selected item, and then adds 0 to all other lists.
 			#adding 0 to all other lists is done to keep the history list of each account/container up to date with the correct length.
+			index = self.acctList.indexItem(name)
 			for i in range(len(self.acctList.list)):
-				index = self.acctList.indexItem(name)
 				if i == index:
 					self.acctList.list[index].addVal(value)
 				else:
@@ -251,7 +258,7 @@ class ControllerInstance:
 				if itemType == Account:
 					printList[i].append(self.acctList.list[itemIndex].history[i])
 				elif itemType == Container:
-					printList[i].append(self.contList.list[itemIndex].getSum(self.contList, self.acctList, i))
+					printList[i].append(self.contList.list[itemIndex].history[i])
 
 		#prints the name of each item being printed and then a dividing line
 		namesStr = ""
