@@ -108,7 +108,8 @@ class Container:
 				if accts.itemInList(name):
 					#if the name is in the list (all of these names should be), then the account there 
 	 				#should have it's value changed based on change and the account's percentage in this container.
-					accts.list[accts.indexItem(name)].addVal(change * percent)
+					# accts.list[accts.indexItem(name)].addVal(change * percent)
+					pass
 				elif conts.itemInList(name):
 					conts.list[conts.indexItem(name)].addVal(change * percent, accts, conts)
 				else:

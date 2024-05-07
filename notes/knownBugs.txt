@@ -1,0 +1,7 @@
+1. 
+    In this set up, the HRT acct never properly displays how much it has and depositing into total doesn't properly work.
+
+    self.autoCreate("account", "HRT")
+    self.autoCreate("account", "personal")
+    self.autoCreate("Container", "Total", [["HRT", .5], ["Misc", .5]])
+    self.autoCreate("Container", "Misc", [["HRT", .5], ["personal", .5]])

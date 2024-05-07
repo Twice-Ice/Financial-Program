@@ -9,6 +9,9 @@ class ControllerInstance:
 		self.history = [] #[[Date, Value, Account], etc.]
 		self.autoCreate("account", "HRT")
 		self.autoCreate("account", "personal")
+		self.autoCreate("Account", "test")
+		self.autoCreate("Container", "lesser container", [["test", 1]])
+		self.autoCreate("Container", "The Big Container", [["lesser Container", 1]])
 		self.autoCreate("Container", "Total", [["HRT", .5], ["Misc", .5]])
 		self.autoCreate("Container", "Misc", [["HRT", .5], ["personal", .5]])
 
@@ -257,7 +260,8 @@ class ControllerInstance:
 				if itemType == Account:
 					printList[i].append(self.acctList.list[itemIndex].history[i])
 				elif itemType == Container:
-					printList[i].append(self.contList.list[itemIndex].history[i])
+					printList[i].append(self.contList.list[itemIndex].getSum(self.contList, self.acctList, i))
+					# printList[i].append(self.contList.list[itemIndex].history[i])
 
 		#prints the name of each item being printed and then a dividing line
 		namesStr = ""
