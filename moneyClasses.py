@@ -150,6 +150,12 @@ class Container:
 	"""
 	def getSum(self, contList, acctList, instance):
 		sum = 0
+		for i in range(0, instance):
+			sum += self.getSumOverInstance(contList, acctList, i)
+		return sum
+
+	def getSumOverInstance(self, contList, acctList, instance):
+		sum = 0
 		#loops through the lists and if the instance is the selected instance, and the parent is the same as self.name, then it's value is added to the sum for later use.
 		for i in range(len(contList.list)):
 			cont = contList.list[i].history.list[instance]

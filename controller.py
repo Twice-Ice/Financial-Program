@@ -263,7 +263,7 @@ class ControllerInstance:
 				if itemType == Account:
 					printList[i].append(self.acctList.list[itemIndex].getSum(i))
 				elif itemType == Container:
-					printList[i].append(self.contList.list[itemIndex].getSum(self.contList, self.acctList, i))
+					printList[i].append(self.contList.list[itemIndex].history.getSum(i))
 
 		#prints the name of each item being printed and then a dividing line
 		namesStr = ""
