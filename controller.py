@@ -1,5 +1,6 @@
 from moneyClasses import Account, Container, ItemList
 from datetime import datetime
+import globals as gb
 import os
 
 class ControllerInstance:
@@ -29,16 +30,18 @@ class ControllerInstance:
 				self.create()
 			case "display":
 				self.display()
-			case "temp":
-				self.temp()
+			case "breakpoint":
+				self.breakpoint()
+			case "val":
+				self.val()
 			case "edit":
 				pass
 			case _:
 				print(f"{command} is not a valid option! Type help to see all available commands.")
 
-		#updates history for all accounts, but not containers as those are updated any time a value is added to them.
-		# for i in range(len(self.acctList.list)):
-			# self.acctList.list[i].updateHistory()
+		#this is the way of keeping track of the current instance of the program.
+		gb.COM_INSTANCE += 1
+
 
 	"""
 		Prints all containers and accounts stored within the current instance of the application.
@@ -67,7 +70,7 @@ class ControllerInstance:
 	"""
 		Deposit money into specific accounts or containers based on user input
 	"""
-	def deposit(self):
+	def deposit(self): 
 		name = input(f"Which account would you like to deposit into?\n{self.printContainers()}\n")
 		if self.contList.itemInList(name) or self.acctList.itemInList(name):
 			value = float(input(f"How much would you like to deposit into {name}?\n"))
@@ -80,9 +83,9 @@ class ControllerInstance:
 			index = self.contList.indexItem(name)
 			for i in range(len(self.contList.list)):
 				if i == index:
-					self.acctList, self.contList = self.contList.list[index].addVal(value, self.acctList, self.contList)
+					self.acctList, self.contList = self.contList.list[self.contList.indexItem(name)].addVal(value, self.acctList, self.contList)
 				else:
-					self.acctList, self.contList = self.contList.list[i].addVal(0, self.acctList, self.contList)
+					self.acctList, self.contList = self.contList.list[i].addVal(0, self.acctList, self.contList)					
 		elif self.acctList.itemInList(name):
 			#adds the value to only the selected item, and then adds 0 to all other lists.
 			#adding 0 to all other lists is done to keep the history list of each account/container up to date with the correct length.
@@ -258,10 +261,9 @@ class ControllerInstance:
 			for j in range(4, len(itemList)):
 				itemType, itemIndex = self.getItemInfo(itemList[j])
 				if itemType == Account:
-					printList[i].append(self.acctList.list[itemIndex].history[i])
+					printList[i].append(self.acctList.list[itemIndex].getSum(i))
 				elif itemType == Container:
 					printList[i].append(self.contList.list[itemIndex].getSum(self.contList, self.acctList, i))
-					# printList[i].append(self.contList.list[itemIndex].history[i])
 
 		#prints the name of each item being printed and then a dividing line
 		namesStr = ""
@@ -281,5 +283,20 @@ class ControllerInstance:
 			lineStr += "|"
 			print(lineStr)
 
-	def temp(self):
-		print(self.printContainers())
+	"""
+		A function to call so that I can activate a breakpoint
+	"""
+	def breakpoint(self):
+		print()
+
+	"""
+		dev tool, lets me see what the exact value of an account is without using a breakpoint or going inside of the watch.
+	"""
+	def val(self):
+		os.system("cls")
+		name = input("What is the name of the account you would like to see the value of?\n")
+		if self.acctList.itemInList(name):
+			print(f"The value of {name} is {self.acctList.list[self.acctList.indexItem(name)].val}")
+		else:
+			print(f"{name} is invalid, please choose again. (only accounts, no containers)")
+			self.val()

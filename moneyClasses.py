@@ -1,4 +1,5 @@
 import os
+import globals as gb
 
 """
 	An advanced list class for use cases within only this program  
@@ -56,31 +57,55 @@ class ItemList:
 			return nameList.index(itemName.lower())
 		else:
 			raise NameError("ayo for some reason this is causing a bug. Last time I worked on this, there was a workaround by returning a bool as well, but that system sucked so I got rid of it. GL with the bug though, future me.")
+ 
+"""
+	A class to track instances of history within history lists. This is so that variables can be called directly instead of spots in lists.
+"""
+class HistoryInstance:
+	def __init__(self, val : float, instance : int, parent: str):
+		self.val = val
+		self.instance = instance
+		self.parent = parent
+
+"""
+	A class to hold the history of an item instead of just a list messily put together.
+"""
+class HistoryList:
+	def __init__(self):
+		self.list = [] #[[instance num, where it came from], [etc.]]
+
+	"""
+		adds a new history instance to the object's list, with the value, instantiation group, and parent of the object.
+	"""
+	def addInstance(self, val : float, instance : int, parent : str = "default"):
+		self.list.append(HistoryInstance(val, instance, parent))
+
+	"""
+		gets the sum value of all history instances at a certain point in time/instance (the variable)
+	"""
+	def getSum(self, instance : int):
+		sum = 0
+		for case in self.list:
+			if case.instance == instance:
+				sum += case.val
+
+		return sum
 
 class Account:
 	def __init__(self, name : str = "None", historyLen : int = 0):
 		self.name = name
 		self.val = 0
 		self.percent = 1
-		self.history = []
+		self.history = HistoryList()
 		for i in range(historyLen):
 			self.addVal(0)
 
-	def setPercentage(self, percent):
-		self.percent = percent/100
-
-		# os.system("cls")
-		# percent = input(f"Please input the percentage (0 - 100) for your {self.name} account:\n")
-		# try:
-		# 	self.percent = float(percent)/100
-		# except:
-		# 	os.system("cls")
-		# 	print(f"{percent} is not a valid value, please input numbers only.")
-		# 	self.setPercentage()
-
-	def addVal(self, change : float):
+	def addVal(self, change : float, parent : str = "default"):
 		self.val += change
-		self.history.append(self.val)
+		self.history.addInstance(change, gb.COM_INSTANCE, parent)
+
+	def getSum(self, instance : int):
+		return self.history.getSum(instance)
 
 	def printVal(self):
 		return str(self.val)
@@ -89,18 +114,16 @@ class Container:
 	def __init__(self, name : str = "None"):
 		self.name = name
 		self.itemList = [] #should contain a 2d list of [name, percent]
-		self.history = []
+		self.history = HistoryList()
 
-	#adds a value to each account contained within the container, based on the container's itemList percentages.
+	"""
+		adds a value to each account contained within the container, based on the container's itemList percentages.
+	"""
 	def addVal(self, change : float, accts : ItemList, conts : ItemList) -> tuple[ItemList, ItemList]: #accts is where all of the accounts are stored, so that they can be edited and returned.
 		change = float(change)
-		#applies the change to the history
-		if len(self.history) > 0:
-			self.history.append(self.history[len(self.history)-1] + change)
-		else: #if the history doesn't already have anything in it's list, then change is just applied to start the chain of events.
-			self.history.append(change)
 		#if the change isn't negative
 		if change >= 0:
+			self.history.addInstance(change, gb.COM_INSTANCE)
 			#checks all of the names in this container's list of names + percentages.
 			for i in range(len(self.itemList)):
 				name = self.itemList[i][0]
@@ -108,8 +131,7 @@ class Container:
 				if accts.itemInList(name):
 					#if the name is in the list (all of these names should be), then the account there 
 	 				#should have it's value changed based on change and the account's percentage in this container.
-					# accts.list[accts.indexItem(name)].addVal(change * percent)
-					pass
+					accts.list[accts.indexItem(name)].addVal(change * percent, self.name)
 				elif conts.itemInList(name):
 					conts.list[conts.indexItem(name)].addVal(change * percent, accts, conts)
 				else:
@@ -120,36 +142,26 @@ class Container:
 			return accts, conts
 		else:
 			raise ValueError(f"Change, ({change}), must be larger than 0. Money can only be removed form accounts individually.")
-		
-	"""
-		updates the history values for the container, value should be the controller history for the last entry.
-
-		for some reason, putting the update here really messed things up because detecting what the change was by calculating it made the system not work very well.
-		now the history is updated when a value is changed for the container class. This is not true for the Account class, where it's values are updated later to avoid cases where the value aren't detected properly.
-	"""
-	def updateHistory(self, contList : ItemList, acctList : ItemList, historyIndex : int = -1):
-		pass
-		# self.history.append(self.getSum(contList, acctList, historyIndex))
 
 	#need a function to edit self.acctList
 	
 	"""
 		gets the sum value of a container by adding up all the values at a specific index in the history list.
 	"""
-	def getSum(self, contList :ItemList, acctList :ItemList, historyIndex = -1):
-		totalVal = 0
-		
-		#loops through each item in the container's item list
-		for item in self.itemList:
-			if contList.itemInList(item[0]):
-				#if the item is a container, the sum of that container's items is added to the total.
-				totalVal += contList.list[contList.indexItem(item[0])].getSum(contList, acctList, historyIndex)
-			elif acctList.itemInList(item[0]):
-				#if the item is an account, the item's value at history[historyIndex] is added to the total Val.
-				#as eventually all container should only contain accounts, then it's ok to resolve all values in this half of the if statment.
-				totalVal += acctList.list[acctList.indexItem(item[0])].history[historyIndex]
+	def getSum(self, contList, acctList, instance):
+		sum = 0
+		#loops through the lists and if the instance is the selected instance, and the parent is the same as self.name, then it's value is added to the sum for later use.
+		for i in range(len(contList.list)):
+			cont = contList.list[i].history.list[instance]
+			if cont.instance == instance and cont.parent == self.name:
+				sum += cont.val
+				
+		for i in range(len(acctList.list)):
+			acct = acctList.list[i].history.list[instance]
+			if acct.instance == instance and acct.parent == self.name:
+				sum += acct.val
 
-		return totalVal
+		return sum		
 	
 	def getPercent(self):
 		totalPercent = 0

@@ -171,3 +171,35 @@ DISPLAYING CONTS WITH CONTS INSIDE:
 
 	display total
 		total = 100, misc = 50, hrt = 75
+
+
+HISTORY METADATA IDEA:
+	All items have a history list(/object?) that stores when certain values were added to an item's factors.
+	It can't be datetime because multiple things are happening within the same milisecond because damn pcs are fast.
+	therefor, some sort of global/local variable needs to keep track of when things happened.
+	probably a list that says that a certain action happened in a certain instance of the program.
+	and then another int in the same list that says which thing happened first and from where it came from.
+	(ie. the container that said X happened).
+
+	acct: hrt
+	acct: personal
+	cont: Total [[misc, .5], [hrt .5]]
+	contL misc  [[hrt, .5], [personal, .5]]
+
+	deposit 100 Total
+		misc 50, 							hrt 50
+		#add a new entry to misc's history here
+		#also add an entry to hrt's history here
+		[Action Instance, where the money came from] 
+		([the numeric instance in which "what would you like to do" was called that goes up by 1 every time that question is asked, the name of where this value was coming from {ie, "inputed", "total", "misc", etc.}])
+
+		hrt 25, personal 25, 				hrt 50
+		#add in history entries here.
+		SUM (displayed values for the accounts):
+		hrt 75, personal 25
+
+	display misc
+		DATE, 100, Total:  misc 50, hrt 75, personal 25
+	
+	display total
+		DATE, 100, Total:  misc 50, hrt 75
