@@ -2,6 +2,7 @@ from moneyClasses import Account, Container, ItemList
 from datetime import datetime
 import globals as gb
 import os
+import math
 
 class ControllerInstance:
 	def __init__(self):
@@ -214,6 +215,13 @@ class ControllerInstance:
 		else:
 			raise NameError(f"{item} is not a valid item option")	
 	
+	def spaceProperly(self, inputedString, size):
+		size -= len(inputedString)
+		leftSize = math.ceil(size/2)
+		rightSize = math.floor(size/2)
+
+		return " " * leftSize + inputedString + " " * rightSize
+
 	"""
 		Displays the date, value, account deposited into, and data for where the money went/left from.
 	"""
@@ -259,7 +267,7 @@ class ControllerInstance:
 			#Adds all of these stats to the list for later printing
 			printList.append([date, inputVal, outputVal, account])
 
-		#defines the item values at each point in the history for every item after the default items in itemList.
+		#Defines the item values at each point in the history for every item after the default items in itemList.
 		for i in range(len(self.history)):
 			for j in range(4, len(itemList)):
 				itemType, itemIndex = self.getItemInfo(itemList[j])
@@ -268,10 +276,21 @@ class ControllerInstance:
 				elif itemType == Container:
 					printList[i].append(self.contList.list[itemIndex].history.getSum(i))
 
+		#Determines the maximum size of each column in the itemList. This is then used later for spacing each item properly.
+		columnSize = []
+		for j in range(len(itemList)):
+			size = len(str(itemList[j]))
+			for i in range(len(printList)):
+				itemSize = len(str(printList[i][j]))
+				if itemSize > size:
+					size = itemSize
+			columnSize.append(size)
+
+
 		#prints the name of each item being printed and then a dividing line
 		namesStr = ""
 		for i in range(len(itemList)):
-			namesStr += f"| {itemList[i]} "
+			namesStr += f"| {self.spaceProperly(str(itemList[i]), columnSize[i])} "
 		namesStr += "|\n|"
 		for i in range(2, len(namesStr) - 2):
 			namesStr += "-"
@@ -282,7 +301,7 @@ class ControllerInstance:
 		for i in range(len(printList)):
 			lineStr = ""
 			for j in range(len(printList[i])):
-				lineStr += f"| {printList[i][j]} "
+				lineStr += f"| {self.spaceProperly(str(printList[i][j]), columnSize[j])} "
 			lineStr += "|"
 			print(lineStr)
 
