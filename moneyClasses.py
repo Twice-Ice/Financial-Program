@@ -57,7 +57,7 @@ class ItemList:
 			return nameList.index(itemName.lower())
 		else:
 			raise NameError("ayo for some reason this is causing a bug. Last time I worked on this, there was a workaround by returning a bool as well, but that system sucked so I got rid of it. GL with the bug though, future me.")
- 
+
 """
 	A class to track instances of history within history lists. This is so that variables can be called directly instead of spots in lists.
 """
@@ -86,13 +86,36 @@ class HistoryList:
 	def getSum(self, instance : int):
 		sum = 0
 		for case in self.list:
-			if case.instance == instance:
+			if case.instance <= instance:
 				sum += case.val
 
 		return sum
+	
+	"""
+		Returns a list of all of this HistoryList's stats for viewing purposes within the debugger.
+
+		*This is not an end user function*
+	"""
+	def histInfo(self, type):
+		returnList = []
+		match type:
+			case "val":
+				for inst in self.list:
+					returnList.append(inst.val)
+			case "instance":
+				for inst in self.list:
+					returnList.append(inst.instance)
+			case "parent":
+				for inst in self.list:
+					returnList.append(inst.parent)
+			case _:
+				raise NameError(f"{type} is not a valid option.\nThe valid options are: (val, instance, parent)")
+		
+		return returnList
 
 class Account:
 	def __init__(self, name : str = "None", historyLen : int = 0):
+
 		self.name = name
 		self.val = 0
 		self.percent = 1

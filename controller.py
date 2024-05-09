@@ -24,8 +24,12 @@ class ControllerInstance:
 				self.help()
 			case "deposit":
 				self.deposit()
+				#this is the way of keeping track of the current instance of the program.
+				gb.COM_INSTANCE += 1
 			case "withdraw":
 				self.withdraw()
+				#this is the way of keeping track of the current instance of the program.
+				gb.COM_INSTANCE += 1
 			case "create":
 				self.create()
 			case "display":
@@ -39,8 +43,6 @@ class ControllerInstance:
 			case _:
 				print(f"{command} is not a valid option! Type help to see all available commands.")
 
-		#this is the way of keeping track of the current instance of the program.
-		gb.COM_INSTANCE += 1
 
 
 	"""
@@ -170,9 +172,10 @@ class ControllerInstance:
 		elif self.contList.itemInList(chosenAccount):
 			return Container, chosenAccount
 		else:
+			os.system("cls")
 			#if the choice wasn't valid, the user is told so, and then prompted to choose again.
 			print(f"{chosenAccount} isn't a valid option, please choose again.\n\n")
-			return self.chooseAccount()
+			return self.chooseAccount(questionString)
 	
 	"""
 		asks the user a question, along with a list of possible answer options. 

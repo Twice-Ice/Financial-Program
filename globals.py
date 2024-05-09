@@ -1,1 +1,1 @@
-COM_INSTANCE = 0
+COM_INSTANCE = 0 #command_instance
