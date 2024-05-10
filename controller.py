@@ -70,38 +70,54 @@ class ControllerInstance:
 	def help(self):
 		pass
 
-	"""
-		Deposit money into specific accounts or containers based on user input
-	"""
-	def deposit(self): 
-		name = input(f"Which account would you like to deposit into?\n{self.printContainers()}\n")
+	def inputVal(self, type, q1, q2):
+		typeMult = 1 if type == "deposit" else -1
+		name = input(q1)
 		if self.contList.itemInList(name) or self.acctList.itemInList(name):
-			value = float(input(f"How much would you like to deposit into {name}?\n"))
-			self.history.append([datetime.now(), value, name])
-		else:
-			print(f"{name} is not a valid option.")
+			def valInRangeQuestion():
+				val = self.question(f"{q2} {name}?\n", float)
 
-		#if the name is valid, then a value is added to the container named as so.
+				if type == "deposit":
+					if val >= 0:
+						return val
+					else:
+						os.system("cls")
+						print(f"{val} is not a valid option when depositing, make sure when depositing you're only depositing values greater than or equal to 0.")
+						return valInRangeQuestion()
+				elif type == "withdraw":
+					return val
+
+			value = valInRangeQuestion()
+			if value != 0:
+				value = abs(value)
+			self.history.append([datetime.now(), value * typeMult, name])
+		else:
+			print(f"{name} is not a valid option")
+
+
 		if self.contList.itemInList(name):
 			index = self.contList.indexItem(name)
 			for i in range(len(self.contList.list)):
 				if i == index:
-					self.acctList, self.contList = self.contList.list[self.contList.indexItem(name)].addVal(value, self.acctList, self.contList)
+					self.acctList, self.contList = self.contList.list[self.contList.indexItem(name)].addVal(value * typeMult, self.acctList, self.contList)
 				else:
 					self.acctList, self.contList = self.contList.list[i].addVal(0, self.acctList, self.contList)					
 		elif self.acctList.itemInList(name):
-			#adds the value to only the selected item, and then adds 0 to all other lists.
-			#adding 0 to all other lists is done to keep the history list of each account/container up to date with the correct length.
 			index = self.acctList.indexItem(name)
 			for i in range(len(self.acctList.list)):
 				if i == index:
-					self.acctList.list[index].addVal(value)
+					self.acctList.list[index].addVal(value * typeMult)
 				else:
 					self.acctList.list[i].addVal(0)
 
+	"""
+		Deposit money into specific accounts or containers based on user input
+	"""
+	def deposit(self): 
+		self.inputVal("deposit", f"Which account would you like to deposit into?\n{self.printContainers()}\n", "How much would you like to deposit into")
 
 	def withdraw(self):
-		pass
+		self.inputVal("withdraw", f"Which account would you like to withrdaw from?\n{self.printContainers()}\n(It is advised to only withdraw from accounts directly, but you can withdraw from containers as well.)\n", "How much would you like to withdraw from")
 
 	"""
 		Create an account or container manually via user input.
@@ -182,26 +198,53 @@ class ControllerInstance:
 		asks the user a question, along with a list of possible answer options. 
 		Then if the user says something that isn't an option, the question is asked again, otherwise, the user's answer is returned.
 	"""
-	def question(self, questionStr : str, answerOptions : list = [], clearStart : bool = False) -> str:
-		#if the screen should have been cleared upon this function call, then it will ahv ebeen cleared.
-		if clearStart:
-			os.system("cls")
+	# def question(self, questionStr : str, answerOptions : list = [], clearStart : bool = False) -> str:
+	# 	#if the screen should have been cleared upon this function call, then it will ahv ebeen cleared.
+	# 	if clearStart:
+	# 		os.system("cls")
 		
-		#prompts the user with the question
+	# 	#prompts the user with the question
+	# 	command = input(questionStr)
+
+	# 	#all answers and answer options aren't case sensitive because they are all set to lowercase.
+	# 	for i in range(len(answerOptions)):
+	# 		answerOptions[i] = str.lower(answerOptions[i])
+		
+	# 	if command.lower() in answerOptions:
+	# 		#answer was a valid option
+	# 		return command
+	# 	else:
+	# 		#answer wasn't a valid option
+	# 		print(f"{command} is not a valid option.\n\n")
+	# 		#this will never have a True for clearStart because otherwise the user would never see the invalid option line.
+	# 		self.question(questionStr, answerOptions, False)
+
+	def question(self, questionStr : str, answerType : any, answerOptions : list = []) -> any:
 		command = input(questionStr)
 
-		#all answers and answer options aren't case sensitive because they are all set to lowercase.
-		for i in range(len(answerOptions)):
-			answerOptions[i] = str.lower(answerOptions[i])
-		
-		if command.lower() in answerOptions:
-			#answer was a valid option
-			return command
-		else:
-			#answer wasn't a valid option
+		def fail(qStr, aType, aOptions):
 			print(f"{command} is not a valid option.\n\n")
-			#this will never have a True for clearStart because otherwise the user would never see the invalid option line.
-			self.question(questionStr, answerOptions, False)
+			self.question(qStr, aType, aOptions)
+
+		try:
+			if answerType == str:
+				return command
+			elif answerType == int:
+				return int(command)
+			elif answerType == float:
+				return float(command)
+			elif answerType == list:
+				for i in range(len(answerOptions)):
+					answerOptions[i] = str.lower(answerOptions[i])
+				
+				if command.lower() in answerOptions:
+					return command
+				
+			#if the function gets to this point then it's because none of the options chosen were valid so therefor the option was invalid.
+			fail(questionStr, answerType, answerOptions)
+		except:
+			fail(questionStr, answerType, answerOptions)
+			
 
 	"""
 		gets all relavant item info and returns it.
@@ -215,6 +258,11 @@ class ControllerInstance:
 		else:
 			raise NameError(f"{item} is not a valid item option")	
 	
+	"""
+		Properly spaces out items based on the size inputed so that inputedString is centered between to (semi)equal whitespaces.
+
+		On cases where size is odd, the left side is favored to have 1 more whitespace than the right side.
+	"""
 	def spaceProperly(self, inputedString, size):
 		size -= len(inputedString)
 		leftSize = math.ceil(size/2)

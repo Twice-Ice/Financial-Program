@@ -144,27 +144,23 @@ class Container:
 	"""
 	def addVal(self, change : float, accts : ItemList, conts : ItemList) -> tuple[ItemList, ItemList]: #accts is where all of the accounts are stored, so that they can be edited and returned.
 		change = float(change)
-		#if the change isn't negative
-		if change >= 0:
-			self.history.addInstance(change, gb.COM_INSTANCE)
-			#checks all of the names in this container's list of names + percentages.
-			for i in range(len(self.itemList)):
-				name = self.itemList[i][0]
-				percent = float(self.itemList[i][1])
-				if accts.itemInList(name):
-					#if the name is in the list (all of these names should be), then the account there 
-	 				#should have it's value changed based on change and the account's percentage in this container.
-					accts.list[accts.indexItem(name)].addVal(change * percent, self.name)
-				elif conts.itemInList(name):
-					conts.list[conts.indexItem(name)].addVal(change * percent, accts, conts)
-				else:
-					#just in case
-					raise NameError(f"{name} isn't in either account or container list! :(")
+		self.history.addInstance(change, gb.COM_INSTANCE)
+		#checks all of the names in this container's list of names + percentages.
+		for i in range(len(self.itemList)):
+			name = self.itemList[i][0]
+			percent = float(self.itemList[i][1])
+			if accts.itemInList(name):
+				#if the name is in the list (all of these names should be), then the account there 
+				#should have it's value changed based on change and the account's percentage in this container.
+				accts.list[accts.indexItem(name)].addVal(change * percent, self.name)
+			elif conts.itemInList(name):
+				conts.list[conts.indexItem(name)].addVal(change * percent, accts, conts)
+			else:
+				#just in case
+				raise NameError(f"{name} isn't in either account or container list! :(")
 
-			#returns accts so that the values are all updated
-			return accts, conts
-		else:
-			raise ValueError(f"Change, ({change}), must be larger than 0. Money can only be removed form accounts individually.")
+		#returns accts so that the values are all updated
+		return accts, conts
 
 	#need a function to edit self.acctList
 	
