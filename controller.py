@@ -224,11 +224,11 @@ class ControllerInstance:
 
 		def fail(qStr, aType, aOptions):
 			print(f"{command} is not a valid option.\n\n")
-			self.question(qStr, aType, aOptions)
+			return self.question(qStr, aType, aOptions)
 
 		try:
 			if answerType == str:
-				return command
+				return str(command)
 			elif answerType == int:
 				return int(command)
 			elif answerType == float:
@@ -241,9 +241,9 @@ class ControllerInstance:
 					return command
 				
 			#if the function gets to this point then it's because none of the options chosen were valid so therefor the option was invalid.
-			fail(questionStr, answerType, answerOptions)
+			return fail(questionStr, answerType, answerOptions)
 		except:
-			fail(questionStr, answerType, answerOptions)
+			return fail(questionStr, answerType, answerOptions)
 			
 
 	"""
