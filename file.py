@@ -1,6 +1,9 @@
 import os
 import tkinter as tk
 from tkinter import filedialog
+from datetime import datetime as dt
+import datetime
+import calendar
 
 class File:
 	def __init__(self):
@@ -71,9 +74,17 @@ class File:
 
 		If a user has not already selected a folder before using the program before, they MUST select a folder before they can move on with their program.
 	"""
-	def save(self, saveData : str):
+	def save(self, saveData : str, saveBackup : bool = True):
+		#if the selected file was never defined.
 		if self.filePath == "":
 			self.selectFolder("Saving As", required = True)
 
+		#saves the data as intended within the Saves folder.
 		with open(self.filePath, "w") as file:
 			file.write(saveData)
+		
+		#saves a backup with the date of when it happened and then the epoch time for exact order precision.
+		if saveBackup:
+			fileName = self.filePath.split("/")[-1]
+			with open(f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Financial\\Backups\\{fileName[0:-4]}_{dt.now().strftime("%m-%d-%y")}_{calendar.timegm(dt.now().timetuple())}.txt", "w") as file:
+				file.write(saveData)

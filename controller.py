@@ -13,13 +13,14 @@ class ControllerInstance:
 		self.acctList = ItemList()
 		self.contList = ItemList()
 		self.history = [] #[[Date, Value, Account], etc.]
-		self.autoCreate("account", "HRT")
-		self.autoCreate("account", "personal")
-		self.autoCreate("Account", "test")
-		self.autoCreate("Container", "lesser container", [["test", 1]])
-		self.autoCreate("Container", "The Big Container", [["lesser Container", 1]])
-		self.autoCreate("Container", "Total", [["HRT", .5], ["Misc", .5]])
-		self.autoCreate("Container", "Misc", [["HRT", .5], ["personal", .5]])
+		self.load()
+		# self.autoCreate("account", "HRT")
+		# self.autoCreate("account", "personal")
+		# self.autoCreate("Account", "test")
+		# self.autoCreate("Container", "lesser container", [["test", 1]])
+		# self.autoCreate("Container", "The Big Container", [["lesser Container", 1]])
+		# self.autoCreate("Container", "Total", [["HRT", .5], ["Misc", .5]])
+		# self.autoCreate("Container", "Misc", [["HRT", .5], ["personal", .5]])
 
 	def update(self):
 		command = input("\n\nWhat would you like to do?\n")
@@ -47,6 +48,8 @@ class ControllerInstance:
 				pass
 			case "save":
 				self.save()
+			case "load":
+				self.load()
 			case _:
 				print(f"{command} is not a valid option! Type help to see all available commands.")
 
@@ -75,6 +78,24 @@ class ControllerInstance:
 
 	def help(self):
 		pass
+
+	def autoInputVal(self, datetime, value, accountName):
+		self.history.append([datetime, value, accountName])
+
+		if self.contList.itemInList(accountName):
+			index = self.contList.indexItem(accountName)
+			for i in range(len(self.contList.list)):
+				if i == index:
+					self.acctList, self.contList = self.contList.list[self.contList.indexItem(accountName)].addVal(value, self.acctList, self.contList)
+				else:
+					self.acctList, self.contList = self.contList.list[i].addVal(0, self.acctList, self.contList)					
+		elif self.acctList.itemInList(accountName):
+			index = self.acctList.indexItem(accountName)
+			for i in range(len(self.acctList.list)):
+				if i == index:
+					self.acctList.list[index].addVal(value)
+				else:
+					self.acctList.list[i].addVal(0)
 
 	def inputVal(self, type, q1, q2):
 		typeMult = 1 if type == "deposit" else -1
@@ -122,6 +143,10 @@ class ControllerInstance:
 	def deposit(self): 
 		self.inputVal("deposit", f"Which account would you like to deposit into?\n{self.printContainers()}\n", "How much would you like to deposit into")
 
+
+	"""
+		Withdraw money from specific accounts or containers based on user input
+	"""
 	def withdraw(self):
 		self.inputVal("withdraw", f"Which account would you like to withrdaw from?\n{self.printContainers()}\n(It is advised to only withdraw from accounts directly, but you can withdraw from containers as well.)\n", "How much would you like to withdraw from")
 
@@ -378,7 +403,7 @@ class ControllerInstance:
 			itemListStr = ""
 			#container's item list
 			for j in range(len(self.contList.list[i].itemList)):
-				itemListStr += f"{self.contList.list[i].itemList[j][0]} {self.contList.list[i].itemList[j][1]}"
+				itemListStr += f"{self.contList.list[i].itemList[j][0]}; {self.contList.list[i].itemList[j][1]}"
 				if j < len(self.contList.list[i].itemList) - 1:
 					itemListStr += ", "
 			#end result
@@ -395,7 +420,7 @@ class ControllerInstance:
 			lineStr = ""
 			for j in range(len(instance)):
 				#how to handle instances where the item within the history instance is a datetime object as to avoid cases where the program crashes bcs oh no datetime to str doesn't exist DDDD:
-				item = str(instance[j]) if type(instance[j]) != datetime else instance[j].strftime("%d/%m/%y %H:%M:%S.%f")
+				item = str(instance[j]) if type(instance[j]) != datetime else instance[j].strftime("%m/%d/%y %H:%M:%S:%f")
 				lineStr += item
 				if j < len(instance) - 1:
 					lineStr += ", "
@@ -410,3 +435,51 @@ class ControllerInstance:
 		print("Saved!\n\nPress Enter to continue\n")
 		input()
 		os.system("cls")
+
+	def load(self):
+		self.history = []
+		self.acctList = ItemList()
+		self.contList = ItemList()
+
+		with open(self.file.filePath) as file:
+			loadState = ""
+			for line in file:
+				if line.strip() == "ITEMS" or line.strip() == "TRANSACTIONS":
+					loadState = line.strip()
+				else:
+					line = line[0:-1].split(", ")
+					if loadState == "ITEMS":
+						itemType = line[0]
+						name = line[1]
+						if itemType == "Account":
+							self.autoCreate(itemType, name)
+						elif itemType == "Container":
+							itemList = []
+
+							for i in range(2, len(line)):
+								itemCase = line[i].split("; ")
+								itemName = itemCase[0]
+								itemPercent = float(itemCase[1])
+								itemList.append([itemName, itemPercent])
+
+							self.autoCreate(itemType, name, itemList)
+					elif loadState == "TRANSACTIONS":
+						date = line[0]
+						value = float(line[1])
+						account = line[2]
+
+						date = datetime(
+							month = int(date[0:2]),
+							day = int(date[3:5]),
+							year = int(date[6:8]) + 2000,
+							hour = int(date[9:11]),
+							minute = int(date[12:14]),
+							second = int(date[15:17]),
+							microsecond = int(date[18:len(date)])
+							)
+						
+						self.autoInputVal(date, value, account)
+					else:
+						raise TypeError("Looks like somehow the save/load functions aren't communicating properly given the fact that somehow there isn't a loadState???\nEven though the loadstate is defined as the first line of the save...")
+
+#

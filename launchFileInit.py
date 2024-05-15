@@ -19,3 +19,7 @@ if os.path.exists(path) == False:
 path = f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Financial\\Saves"
 if os.path.exists(path) == False:
 	os.makedirs(path)
+	
+path = f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Financial\\Backups"
+if os.path.exists(path) == False:
+	os.makedirs(path)
