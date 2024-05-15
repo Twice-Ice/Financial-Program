@@ -366,7 +366,29 @@ class ControllerInstance:
 			return result / 10**n_digits
 
 		saveData = ""
-		#loops through all of self.history
+		
+		#Items section identifier
+		saveData += "ITEMS\n"
+
+		#accounts
+		for i in range(len(self.acctList.list)):
+			saveData += f"Account, {self.acctList.list[i].name}\n"
+		#containers
+		for i in range(len(self.contList.list)):
+			itemListStr = ""
+			#container's item list
+			for j in range(len(self.contList.list[i].itemList)):
+				itemListStr += f"{self.contList.list[i].itemList[j][0]} {self.contList.list[i].itemList[j][1]}"
+				if j < len(self.contList.list[i].itemList) - 1:
+					itemListStr += ", "
+			#end result
+			saveData += f"Container, {self.contList.list[i].name}, {itemListStr}\n"
+
+		#Transactions section identifier
+		saveData += "TRANSACTIONS\n"
+
+
+		#loops through all transactions
 		for i in range(len(self.history)):
 			#and adds to saveData, the history instance's information. 
 			instance = self.history[i]
