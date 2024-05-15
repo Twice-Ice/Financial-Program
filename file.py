@@ -3,58 +3,77 @@ import tkinter as tk
 from tkinter import filedialog
 
 class File:
-    def __init__(self, filePath : str = None):
-        self.filePath = filePath
+	def __init__(self):
+		#metaPath is where data for where the current save is, is located.
+		self.metaPath = f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Financial\\meta.txt"
+		#filePath is the actual path stored within meta.txt for the file that you're saving.
+		self.filePath = ""
+		#this defines the filePath properly, however if a file hasn't been already chosen or initalized, it will still be set to "".
+		self.setFilePath()
+		
+		#options when choosing to save, or load a file.
+		self.options = {
+			"defaultextension" : ".txt",
+			"filetypes" : [("text files", "*txt")],
+			"initialdir" : f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Financial\\Saves",
+			"title" : "[NOT SET BY DEV]",
+		}
 
-        self.options = {
-            "defaultextension" : ".txt",
-            "filetypes" : [("text files", "*txt")],
-            "initialdir" : "Downloads",
-            "title" : "ooga booga",
-        }
+	"""
+		Defines the file path based on the file location stored within meta.txt.
+	"""
+	def setFilePath(self):
+		with open(self.metaPath, "r") as meta:
+			for line in meta:
+				self.filePath = line
 
-    def updateMeta(self):
-        with open(f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Financial" + "\\meta.txt", "w") as meta:
-            meta.write(self.filePath)
+	"""
+		Updates meta.txt to whatever self.filePath is set to in the current instance of the program.
+	"""
+	def updateMeta(self):
+		with open(self.metaPath, "w") as meta:
+			meta.write(self.filePath)
 
-    def loadFile(self): 
-        root = tk.Tk()
-        root.withdraw()
+	"""
+		A function that allows you to select a folder which will be used in meta.txt as your chosen/default folder.
+	"""
+	def selectFolder(self, title : str, required : bool = False,):
+		def defineFilePath():
+			#tkinter window initialization stuff
+			root = tk.Tk()
+			root.withdraw()
 
+			#setting options for the window's title so the user know's what they are doing.
+			saveOptions = self.options
+			saveOptions["title"] = title
 
-        tempFilePath = filedialog.askopenfilename(**self.options)
+			#where the actual file path is asked for and given. This does not create a file and as such, that should be done outside of this function.
+			filePath = filedialog.asksaveasfilename(**self.options)
 
-        if tempFilePath != "":
-            self.filePath = tempFilePath
-            self.updateMeta()
+			if filePath != "": #if a file is chosen, then the filePath is updated and meta.txt's information is also, in turn, updated.
+				self.filePath = filePath
+				self.updateMeta()
+			elif required: #if it is required that a file be selected, then the window pops back up and the terminal says you must choose a file.
+				os.system("cls")
+				print("You must choose a file.")
+				defineFilePath()
+		defineFilePath()
 
+	"""
+		Allows the user to select a folder and save the file as the name + location that they have chosen.
+	"""
+	def saveAs(self):
+		self.selectFolder("Saving As")
+		self.save()
 
-    def saveFile(self, filePath : str = None):
-        if filePath != None:
-            with open(f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Financial" + "\\meta.txt", "w") as meta:
-                meta.write(filePath)
+	"""
+		Allows the user to save a file without selecting a folder beforehand.
 
-        
-        filePath = filePath if filePath != None else self.filePath
-        
+		If a user has not already selected a folder before using the program before, they MUST select a folder before they can move on with their program.
+	"""
+	def save(self, saveData : str):
+		if self.filePath == "":
+			self.selectFolder("Saving As", required = True)
 
-        
-
-    def saveFileAs(self):
-        root = tk.Tk()
-        root.withdraw()
-
-        filePath = filedialog.asksaveasfilename(**self.options)
-
-        if filePath != "":
-            self.filePath = filePath
-            self.updateMeta()
-
-savePath = ""
-with open(f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Financial" + "\\meta.txt") as meta:
-    for line in meta:
-        savePath = line
-
-temp = File(savePath)
-
-temp.saveFileAs()
+		with open(self.filePath, "w") as file:
+			file.write(saveData)

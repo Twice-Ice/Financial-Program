@@ -1,11 +1,15 @@
 from moneyClasses import Account, Container, ItemList
 from datetime import datetime
+from file import File
 import globals as gb
 import os
 import math
+import tkinter as tk
+from tkinter import filedialog
 
 class ControllerInstance:
 	def __init__(self):
+		self.file = File()
 		self.acctList = ItemList()
 		self.contList = ItemList()
 		self.history = [] #[[Date, Value, Account], etc.]
@@ -41,6 +45,8 @@ class ControllerInstance:
 				self.val()
 			case "edit":
 				pass
+			case "save":
+				self.save()
 			case _:
 				print(f"{command} is not a valid option! Type help to see all available commands.")
 
@@ -198,27 +204,6 @@ class ControllerInstance:
 		asks the user a question, along with a list of possible answer options. 
 		Then if the user says something that isn't an option, the question is asked again, otherwise, the user's answer is returned.
 	"""
-	# def question(self, questionStr : str, answerOptions : list = [], clearStart : bool = False) -> str:
-	# 	#if the screen should have been cleared upon this function call, then it will ahv ebeen cleared.
-	# 	if clearStart:
-	# 		os.system("cls")
-		
-	# 	#prompts the user with the question
-	# 	command = input(questionStr)
-
-	# 	#all answers and answer options aren't case sensitive because they are all set to lowercase.
-	# 	for i in range(len(answerOptions)):
-	# 		answerOptions[i] = str.lower(answerOptions[i])
-		
-	# 	if command.lower() in answerOptions:
-	# 		#answer was a valid option
-	# 		return command
-	# 	else:
-	# 		#answer wasn't a valid option
-	# 		print(f"{command} is not a valid option.\n\n")
-	# 		#this will never have a True for clearStart because otherwise the user would never see the invalid option line.
-	# 		self.question(questionStr, answerOptions, False)
-
 	def question(self, questionStr : str, answerType : any, answerOptions : list = []) -> any:
 		command = input(questionStr)
 
@@ -245,7 +230,6 @@ class ControllerInstance:
 		except:
 			return fail(questionStr, answerType, answerOptions)
 			
-
 	"""
 		gets all relavant item info and returns it.
 		returns itemType, itemIndex.
@@ -370,3 +354,37 @@ class ControllerInstance:
 		else:
 			print(f"{name} is invalid, please choose again. (only accounts, no containers)")
 			self.val()
+
+	"""
+		Saves the session data to the default file, only prompting the user to choose where to save if a default file hasn't been previously chosen already.
+	"""
+	def save(self):
+		#copy and pasted from codequest notes bcs I'm lazy :)
+		def halfRound(val:float, n_digits:int = 0):
+			val *= 10**n_digits
+			result = int(val + (0.50002 if val >= 0 else -0.50002))
+			return result / 10**n_digits
+
+		saveData = ""
+		#loops through all of self.history
+		for i in range(len(self.history)):
+			#and adds to saveData, the history instance's information. 
+			instance = self.history[i]
+			lineStr = ""
+			for j in range(len(instance)):
+				#how to handle instances where the item within the history instance is a datetime object as to avoid cases where the program crashes bcs oh no datetime to str doesn't exist DDDD:
+				item = str(instance[j]) if type(instance[j]) != datetime else instance[j].strftime("%d/%m/%y %H:%M:%S.%f")
+				lineStr += item
+				if j < len(instance) - 1:
+					lineStr += ", "
+			#adds the instance's information, separated by a new line.
+			saveData += f"{lineStr}\n"
+			#shows a percentage for how much of the file is saved.
+			os.system("cls")
+			print(f"{halfRound(((i+1)/len(self.history))*100, 1)} %")
+
+		#properly saves the data and prompts the user to press enter in order to get out of the save menu.
+		self.file.save(saveData)
+		print("Saved!\n\nPress Enter to continue\n")
+		input()
+		os.system("cls")
