@@ -6,13 +6,15 @@ import os
 import math
 import tkinter as tk
 from tkinter import filedialog
+import calendar
+from datetime import datetime as dt
 
 class ControllerInstance:
 	def __init__(self):
 		self.file = File()
 		self.acctList = ItemList()
 		self.contList = ItemList()
-		self.history = [] #[[Date, Value, Account], etc.]
+		self.history = [] #[[ID, Date, Value, Account, Notes], etc.]   #OLD: [[Date, Value, Account], etc.]
 		self.load()
 		# self.autoCreate("account", "HRT")
 		# self.autoCreate("account", "personal")
@@ -28,29 +30,29 @@ class ControllerInstance:
 		match str.lower(command):
 			case "help":
 				self.help()
-			case "deposit":
+			case "deposit":#
 				self.deposit()
 				#this is the way of keeping track of the current instance of the program.
 				self.save()
-			case "withdraw":
+			case "withdraw":#
 				self.withdraw()
 				#this is the way of keeping track of the current instance of the program.
 				self.save()
-			case "create":
+			case "create":#
 				self.create()
-			case "display":
+			case "display":#
 				self.display()
-			case "breakpoint":
+			case "breakpoint":##
 				self.breakpoint()
-			case "val":
+			case "val":##
 				self.val()
 			case "edit":
 				pass
-			case "save":
+			case "save":#
 				self.save(saveAnimation = True)
-			case "load":
+			case "load":#
 				self.load()
-			case "quit":
+			case "quit":#
 				print("Have a good one!\n\n")
 				gb.DOEXIT = True
 			case _:
@@ -80,7 +82,32 @@ class ControllerInstance:
 		return totalStr
 
 	def help(self):
-		pass
+		options = {
+			"Deposit" : "Deposit an amount into an account or container.",
+			"Create" : "Create an account or container.",
+		}
+
+		keys = []
+		for key, answer in options.items():
+			keys.append(key)
+
+		def specifics():
+			os.system("cls")
+			print("Here are all possible commands:")
+			print("(Note: These ARE case sensitive when inputing.)\n")
+			for key in keys:
+				print(f"   {key}")
+
+			command = input("Would you like to view the specifics on an option?\n")
+			if command in keys:
+				print(options[command])
+			elif command.lower() == "quit":
+				os.system("cls")
+				return
+			else:
+				print(f"{command} isn't a valid option, you can type \"quit\" to leave help.")
+				return specifics()
+		specifics()
 
 	"""
 		automatically handle transactions such as deposits or withdrawals within this function. It handles almost exactly like inputVal, just without user prompts.
@@ -129,7 +156,10 @@ class ControllerInstance:
 			value = valInRangeQuestion()
 			if value != 0:
 				value = abs(value)
-			self.history.append([datetime.now(), value * typeMult, name])
+
+			notes = self.question("Is there any notes for this transaction that you would like to add? (Press Enter to move on)", str)
+			transactionID = calendar.timegm(dt.now().timetuple())
+			self.history.append([datetime.now(), value * typeMult, name, notes, transactionID])
 		else:
 			print(f"{name} is not a valid option")
 
@@ -315,9 +345,9 @@ class ControllerInstance:
 
 		printList = []
 		#defines every input interaction case for all accounts with printList
-		for i in range(len(self.history)):
+		for i in range(gb.COM_INSTANCE):
 			#The date in a displayable format, it is stored in datetime in case data manipulation is required without risking mixing up the order of all deposits.
-			date = str(self.history[i][0].date())
+			date = str(self.history[i][0].strftime("%b, %d %Y"))
 
 			#Initializes inputVal and outputVal variables to properly display the money going in and out of all accounts.
 			money = self.history[i][1]
@@ -338,7 +368,7 @@ class ControllerInstance:
 			printList.append([date, inputVal, outputVal, account])
 
 		#Defines the item values at each point in the history for every item after the default items in itemList.
-		for i in range(len(self.history)):
+		for i in range(gb.COM_INSTANCE):
 			for j in range(4, len(itemList)):
 				itemType, itemIndex = self.getItemInfo(itemList[j])
 				if itemType == Account:
@@ -494,5 +524,15 @@ class ControllerInstance:
 						self.autoInputVal(date, value, account)
 					# else:
 						# raise TypeError("Looks like somehow the save/load functions aren't communicating properly given the fact that somehow there isn't a loadState???\nEven though the loadstate is defined as the first line of the save...")
+
+	def remove(self):
+		command = self.question("Would you like to remove a transaction, or an item such as a container/account?", str, ["Transaction", "Deposit", "Withdrawal", "Withdraw", "Item", "Container", "Account"])
+		if command == "Transaction" or command == "Deposit" or command == "Withdrawal" or command == "Withdraw":
+			pass
+		elif command == "Item" or command == "Container" or command == "Account":
+			pass
+
+	def removeTransaction(self):
+		print("What instance would you like to delete?")
 
 #
