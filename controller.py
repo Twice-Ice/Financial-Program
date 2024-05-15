@@ -31,11 +31,11 @@ class ControllerInstance:
 			case "deposit":
 				self.deposit()
 				#this is the way of keeping track of the current instance of the program.
-				gb.COM_INSTANCE += 1
+				self.save()
 			case "withdraw":
 				self.withdraw()
 				#this is the way of keeping track of the current instance of the program.
-				gb.COM_INSTANCE += 1
+				self.save()
 			case "create":
 				self.create()
 			case "display":
@@ -47,9 +47,12 @@ class ControllerInstance:
 			case "edit":
 				pass
 			case "save":
-				self.save()
+				self.save(saveAnimation = True)
 			case "load":
 				self.load()
+			case "quit":
+				print("Have a good one!\n\n")
+				gb.DOEXIT = True
 			case _:
 				print(f"{command} is not a valid option! Type help to see all available commands.")
 
@@ -79,6 +82,9 @@ class ControllerInstance:
 	def help(self):
 		pass
 
+	"""
+		automatically handle transactions such as deposits or withdrawals within this function. It handles almost exactly like inputVal, just without user prompts.
+	"""
 	def autoInputVal(self, datetime, value, accountName):
 		self.history.append([datetime, value, accountName])
 
@@ -97,6 +103,12 @@ class ControllerInstance:
 				else:
 					self.acctList.list[i].addVal(0)
 
+		#gotta do this, not before the other stuff though bcs it will be delayed by one COM_INSTANCE rather than applying after and it's proper.
+		gb.COM_INSTANCE += 1
+
+	"""
+		A combined way of handling deposits and withdrawals by prompting the user with questions such as q1 and q2.
+	"""
 	def inputVal(self, type, q1, q2):
 		typeMult = 1 if type == "deposit" else -1
 		name = input(q1)
@@ -137,12 +149,13 @@ class ControllerInstance:
 				else:
 					self.acctList.list[i].addVal(0)
 
+		gb.COM_INSTANCE += 1
+
 	"""
 		Deposit money into specific accounts or containers based on user input
 	"""
 	def deposit(self): 
 		self.inputVal("deposit", f"Which account would you like to deposit into?\n{self.printContainers()}\n", "How much would you like to deposit into")
-
 
 	"""
 		Withdraw money from specific accounts or containers based on user input
@@ -383,7 +396,7 @@ class ControllerInstance:
 	"""
 		Saves the session data to the default file, only prompting the user to choose where to save if a default file hasn't been previously chosen already.
 	"""
-	def save(self):
+	def save(self, saveAnimation : bool = False):
 		#copy and pasted from codequest notes bcs I'm lazy :)
 		def halfRound(val:float, n_digits:int = 0):
 			val *= 10**n_digits
@@ -428,13 +441,13 @@ class ControllerInstance:
 			saveData += f"{lineStr}\n"
 			#shows a percentage for how much of the file is saved.
 			os.system("cls")
-			print(f"{halfRound(((i+1)/len(self.history))*100, 1)} %")
+			if saveAnimation:
+				print(f"{halfRound(((i+1)/len(self.history))*100, 1)} %")
 
 		#properly saves the data and prompts the user to press enter in order to get out of the save menu.
 		self.file.save(saveData)
-		print("Saved!\n\nPress Enter to continue\n")
-		input()
-		os.system("cls")
+		if saveAnimation:
+			print("Saved!\n")
 
 	def load(self):
 		self.history = []
@@ -479,7 +492,7 @@ class ControllerInstance:
 							)
 						
 						self.autoInputVal(date, value, account)
-					else:
-						raise TypeError("Looks like somehow the save/load functions aren't communicating properly given the fact that somehow there isn't a loadState???\nEven though the loadstate is defined as the first line of the save...")
+					# else:
+						# raise TypeError("Looks like somehow the save/load functions aren't communicating properly given the fact that somehow there isn't a loadState???\nEven though the loadstate is defined as the first line of the save...")
 
 #

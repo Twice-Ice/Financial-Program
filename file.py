@@ -11,9 +11,6 @@ class File:
 		self.metaPath = f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Financial\\meta.txt"
 		#filePath is the actual path stored within meta.txt for the file that you're saving.
 		self.filePath = ""
-		#this defines the filePath properly, however if a file hasn't been already chosen or initalized, it will still be set to "".
-		self.setFilePath()
-		
 		#options when choosing to save, or load a file.
 		self.options = {
 			"defaultextension" : ".txt",
@@ -21,6 +18,8 @@ class File:
 			"initialdir" : f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Financial\\Saves",
 			"title" : "[NOT SET BY DEV]",
 		}
+		#this defines the filePath properly, however if a file hasn't been already chosen or initalized, it will still be set to "".
+		self.setFilePath()
 
 	"""
 		Defines the file path based on the file location stored within meta.txt.
@@ -29,6 +28,11 @@ class File:
 		with open(self.metaPath, "r") as meta:
 			for line in meta:
 				self.filePath = line
+
+		if self.filePath == "":
+			self.selectFolder("Create Save File", required = True)
+			with open(self.filePath, "w") as file:
+				file.write("this file is unsaved and should be saved to before continuing.\n\n")
 
 	"""
 		Updates meta.txt to whatever self.filePath is set to in the current instance of the program.
