@@ -4,18 +4,19 @@ from tkinter import filedialog
 from datetime import datetime as dt
 import datetime
 import calendar
+import globals as gb
 
 class File:
 	def __init__(self):
 		#metaPath is where data for where the current save is, is located.
-		self.metaPath = f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Financial\\meta.txt"
+		self.metaPath = f"{gb.OG_FILE_PATH}\\{gb.SAVE_FOLDER_NAME}\\meta.txt"
 		#filePath is the actual path stored within meta.txt for the file that you're saving.
 		self.filePath = ""
 		#options when choosing to save, or load a file.
 		self.options = {
 			"defaultextension" : ".txt",
 			"filetypes" : [("text files", "*txt")],
-			"initialdir" : f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Financial\\Saves",
+			"initialdir" : f"{gb.OG_FILE_PATH}\\{gb.SAVE_FOLDER_NAME}\\Saves",
 			"title" : "[NOT SET BY DEV]",
 		}
 		#this defines the filePath properly, however if a file hasn't been already chosen or initalized, it will still be set to "".
@@ -90,5 +91,5 @@ class File:
 		#saves a backup with the date of when it happened and then the epoch time for exact order precision.
 		if saveBackup:
 			fileName = self.filePath.split("/")[-1]
-			with open(f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Financial\\Backups\\{fileName[0:-4]}_{dt.now().strftime("%m-%d-%y")}_{calendar.timegm(dt.now().timetuple())}.txt", "w") as file:
+			with open(f"{gb.OG_FILE_PATH}\\{gb.SAVE_FOLDER_NAME}\\Backups\\{fileName[0:-4]}_{dt.now().strftime("%m-%d-%y")}_{calendar.timegm(dt.now().timetuple())}.txt", "w") as file:
 				file.write(saveData)

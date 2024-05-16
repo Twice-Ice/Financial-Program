@@ -55,6 +55,8 @@ class ControllerInstance:
 			case "quit":#
 				print("Have a good one!\n\n")
 				gb.DOEXIT = True
+			case "print":
+				print(self.file.filePath, self.file.metaPath)
 			case _:
 				print(f"{command} is not a valid option! Type help to see all available commands.")
 
