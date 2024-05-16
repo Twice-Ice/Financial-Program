@@ -58,9 +58,10 @@ while True:
 	MS is limited to the last 2 digits bcs honestly who tf is gonna be inputing new deposits within even the same second???
 	"""
 
-	newMsg = generator.generate_id(int(dt.now().strftime("%y") + str(calendar.timegm(dt.now().timetuple()))[-6:] + dt.now().strftime("%f")[-2:]))
+	uncompressedMsg = int(dt.now().strftime("%y") + str(calendar.timegm(dt.now().timetuple()))[-6:] + dt.now().strftime("%f")[-2:])
+	compressedMsg   = generator.generate_id(uncompressedMsg)
 
-	if oldMsg != newMsg:
-		print(newMsg)
+	if oldMsg != compressedMsg:
+		print(uncompressedMsg, compressedMsg)
 
-	oldMsg = newMsg
+	oldMsg = compressedMsg
