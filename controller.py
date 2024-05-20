@@ -8,12 +8,14 @@ import tkinter as tk
 from tkinter import filedialog
 import calendar
 from datetime import datetime as dt
+from ID import IDGenerator
 
 class ControllerInstance:
 	def __init__(self):
 		self.file = File()
 		self.acctList = ItemList()
 		self.contList = ItemList()
+		self.IDGen = IDGenerator()
 		self.history = [] #[[ID, Date, Value, Account, Notes], etc.]   #OLD: [[Date, Value, Account], etc.]
 		self.load()
 		# self.autoCreate("account", "HRT")
@@ -57,6 +59,9 @@ class ControllerInstance:
 				gb.DOEXIT = True
 			case "print":
 				print(self.file.filePath, self.file.metaPath)
+			case "bal":
+				os.system("cls")
+				print(f"The sum Balance of all accounts is: {self.getBal(gb.COM_INSTANCE)}")
 			case _:
 				print(f"{command} is not a valid option! Type help to see all available commands.")
 
@@ -114,8 +119,8 @@ class ControllerInstance:
 	"""
 		automatically handle transactions such as deposits or withdrawals within this function. It handles almost exactly like inputVal, just without user prompts.
 	"""
-	def autoInputVal(self, datetime, value, accountName):
-		self.history.append([datetime, value, accountName])
+	def autoInputVal(self, id, datetime, name, value, accountName):
+		self.history.append([id, datetime, name, value, accountName])
 
 		if self.contList.itemInList(accountName):
 			index = self.contList.indexItem(accountName)
@@ -140,10 +145,10 @@ class ControllerInstance:
 	"""
 	def inputVal(self, type, q1, q2):
 		typeMult = 1 if type == "deposit" else -1
-		name = input(q1)
-		if self.contList.itemInList(name) or self.acctList.itemInList(name):
+		itemName = input(q1)
+		if self.contList.itemInList(itemName) or self.acctList.itemInList(itemName):
 			def valInRangeQuestion():
-				val = self.question(f"{q2} {name}?\n", float)
+				val = self.question(f"{q2} {itemName}?\n", float)
 
 				if type == "deposit":
 					if val >= 0:
@@ -159,22 +164,37 @@ class ControllerInstance:
 			if value != 0:
 				value = abs(value)
 
-			notes = self.question("Is there any notes for this transaction that you would like to add? (Press Enter to move on)", str)
-			transactionID = calendar.timegm(dt.now().timetuple())
-			self.history.append([datetime.now(), value * typeMult, name, notes, transactionID])
+			transactionName = self.question("What would you like to call this transaction?\n", str, clearScreen = True)
+			notes = self.question("Is there any notes for this transaction?\n[Enter to continue]\n", str, clearScreen = True)
+			doDate = self.question("would you like to set a specific date?\n[y/n]\n", list, ["y", "n", ""], clearScreen = True)
+			if doDate == "y":
+				os.system("cls")
+				properlyFormated = False
+				while properlyFormated == False:
+					dateData = input("Please format as follows:\nMM/DD/YYYY\n")
+					try:
+						dateData = dateData.split("/")
+						date = datetime(int(dateData[2]), int(dateData[0]), int(dateData[1]))
+						properlyFormated = True
+					except:
+						os.system("cls")
+						print(f"{dateData} was not properly formated.")
+			else:
+				date = datetime.now()
+			self.history.append([self.IDGen.generate_id(), date, transactionName, value * typeMult, itemName, notes])
 		else:
-			print(f"{name} is not a valid option")
+			print(f"{itemName} is not a valid option")
 
 
-		if self.contList.itemInList(name):
-			index = self.contList.indexItem(name)
+		if self.contList.itemInList(itemName):
+			index = self.contList.indexItem(itemName)
 			for i in range(len(self.contList.list)):
 				if i == index:
-					self.acctList, self.contList = self.contList.list[self.contList.indexItem(name)].addVal(value * typeMult, self.acctList, self.contList)
+					self.acctList, self.contList = self.contList.list[self.contList.indexItem(itemName)].addVal(value * typeMult, self.acctList, self.contList)
 				else:
 					self.acctList, self.contList = self.contList.list[i].addVal(0, self.acctList, self.contList)					
-		elif self.acctList.itemInList(name):
-			index = self.acctList.indexItem(name)
+		elif self.acctList.itemInList(itemName):
+			index = self.acctList.indexItem(itemName)
 			for i in range(len(self.acctList.list)):
 				if i == index:
 					self.acctList.list[index].addVal(value * typeMult)
@@ -274,12 +294,15 @@ class ControllerInstance:
 		asks the user a question, along with a list of possible answer options. 
 		Then if the user says something that isn't an option, the question is asked again, otherwise, the user's answer is returned.
 	"""
-	def question(self, questionStr : str, answerType : any, answerOptions : list = []) -> any:
+	def question(self, questionStr : str, answerType : any, answerOptions : list = [], clearScreen : bool = False) -> any:
+		if clearScreen:
+			os.system("cls")
+
 		command = input(questionStr)
 
 		def fail(qStr, aType, aOptions):
 			print(f"{command} is not a valid option.\n\n")
-			return self.question(qStr, aType, aOptions)
+			return self.question(qStr, aType, aOptions, clearScreen)
 
 		try:
 			if answerType == str:
@@ -293,7 +316,7 @@ class ControllerInstance:
 					answerOptions[i] = str.lower(answerOptions[i])
 				
 				if command.lower() in answerOptions:
-					return command
+					return command.lower()
 				
 			#if the function gets to this point then it's because none of the options chosen were valid so therefor the option was invalid.
 			return fail(questionStr, answerType, answerOptions)
@@ -328,11 +351,13 @@ class ControllerInstance:
 		Displays the date, value, account deposited into, and data for where the money went/left from.
 	"""
 	def display(self):
-		itemList = ["Date", "Input", "Output", "Account"]
+		itemList = ["ID", "Date", "Name", "Input", "Output", "Account", "Balance"]
+		baseItemListLen = len(itemList)
 
 		#gets the account that the user would like to choose
 		itemType, chosenAccount = self.chooseAccount("What account would you like to view?")
 		# self.question("Would you like to view another account? (y/n)", ["y", "n"], clearStart = True)
+		os.system("cls")
 
 		#adds the chosen account to the printList, including all accounts within the chosen item if it's a container.
 		if itemType == Account:
@@ -348,35 +373,41 @@ class ControllerInstance:
 		printList = []
 		#defines every input interaction case for all accounts with printList
 		for i in range(gb.COM_INSTANCE):
+			#the id of the transaction
+			transactionID = self.history[i][0]
 			#The date in a displayable format, it is stored in datetime in case data manipulation is required without risking mixing up the order of all deposits.
-			date = str(self.history[i][0].strftime("%b, %d %Y"))
-
+			date = str(self.history[i][1].strftime("%b, %d %Y"))
+			#name of the transaction
+			transactionName = self.history[i][2]
 			#Initializes inputVal and outputVal variables to properly display the money going in and out of all accounts.
-			money = self.history[i][1]
+			money = self.history[i][3]
 			if money > 0:
-				inputVal = str(money)
+				inputVal = str(abs(money))
 				outputVal = ""
 			elif money < 0:
 				inputVal = ""
-				outputVal = str(money)
+				outputVal = str(abs(money))
 			else:
 				inputVal = ""
 				outputVal = ""
 			
 			#The name of the account which was deposited to
-			account = self.history[i][2]
+			account = self.history[i][4]
+
+			balance = self.getBal(i)
 
 			#Adds all of these stats to the list for later printing
-			printList.append([date, inputVal, outputVal, account])
+			printList.append([transactionID, date, transactionName, inputVal, outputVal, account, balance])
 
 		#Defines the item values at each point in the history for every item after the default items in itemList.
 		for i in range(gb.COM_INSTANCE):
-			for j in range(4, len(itemList)):
+			for j in range(baseItemListLen, len(itemList)):
 				itemType, itemIndex = self.getItemInfo(itemList[j])
 				if itemType == Account:
-					printList[i].append(self.acctList.list[itemIndex].getSum(i))
+					value = self.acctList.list[itemIndex].getSum(i)
 				elif itemType == Container:
-					printList[i].append(self.contList.list[itemIndex].history.getSum(i))
+					value = self.contList.list[itemIndex].history.getSum(i)
+				printList[i].append(math.ceil(value*100)/100)
 
 		#Determines the maximum size of each column in the itemList. This is then used later for spacing each item properly.
 		columnSize = []
@@ -481,26 +512,36 @@ class ControllerInstance:
 		if saveAnimation:
 			print("Saved!\n")
 
+	"""
+		Loads a file and generates item entries based on what the file contains.
+
+		Files contain "ITEMS" sections and "TRANSACTIONS" sections which determine how to handle the data. 
+	"""
 	def load(self):
+		#resets history and all item lists.
 		self.history = []
 		self.acctList = ItemList()
 		self.contList = ItemList()
 
+		#opens the file based on the location stored within meta.txt
 		with open(self.file.filePath) as file:
 			loadState = ""
 			for line in file:
+				#defines the loadStat and how to handle the data presented in the system.
 				if line.strip() == "ITEMS" or line.strip() == "TRANSACTIONS":
 					loadState = line.strip()
 				else:
+					#splits up the line's data and stores it for later use.
 					line = line[0:-1].split(", ")
 					if loadState == "ITEMS":
 						itemType = line[0]
 						name = line[1]
 						if itemType == "Account":
+							#accounts are simple and don't require much more than the name of the account.
 							self.autoCreate(itemType, name)
 						elif itemType == "Container":
 							itemList = []
-
+							#loops through all remaining data in the line and splits up the data into interpretable information for the auto create (container) function.
 							for i in range(2, len(line)):
 								itemCase = line[i].split("; ")
 								itemName = itemCase[0]
@@ -509,21 +550,25 @@ class ControllerInstance:
 
 							self.autoCreate(itemType, name, itemList)
 					elif loadState == "TRANSACTIONS":
-						date = line[0]
-						value = float(line[1])
-						account = line[2]
+						id = line[0]
+						#data for transactions is split up by commas and those are split earlier in this function before this data is handled.
+						date = line[1]
+						name = line[2]
+						value = float(line[3])
+						account = line[4]
 
+						#to interpret datetime information, due to the formating putting the numbers all in the exact same location, the data is interpreted by just getting the exact location of the values.
 						date = datetime(
 							month = int(date[0:2]),
 							day = int(date[3:5]),
-							year = int(date[6:8]) + 2000,
+							year = int(date[6:8]) + 2000, #stored as a digit 0-99 so 2000 is added so that datetime doesn't just go "oh it's 24" and instead goes "oh it's 2024".
 							hour = int(date[9:11]),
 							minute = int(date[12:14]),
 							second = int(date[15:17]),
 							microsecond = int(date[18:len(date)])
 							)
 						
-						self.autoInputVal(date, value, account)
+						self.autoInputVal(id, date, name, value, account)
 					# else:
 						# raise TypeError("Looks like somehow the save/load functions aren't communicating properly given the fact that somehow there isn't a loadState???\nEven though the loadstate is defined as the first line of the save...")
 
@@ -536,5 +581,11 @@ class ControllerInstance:
 
 	def removeTransaction(self):
 		print("What instance would you like to delete?")
+
+	def getBal(self, instance):
+		value = 0
+		for account in self.acctList.list:
+			value += account.getSum(instance)
+		return math.floor(value*100)/100
 
 #
