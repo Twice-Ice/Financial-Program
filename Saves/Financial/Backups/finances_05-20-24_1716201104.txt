@@ -66,4 +66,3 @@ TRANSACTIONS
 #=3_e, 12/16/22 00:00:00:000000, Unbeatable Full Game, -27.0, spendings, I purchased the full game of unbeatable, but since it isn't released yet (at the time of purchase), I didn't get it off of steam.
 #=4xB, 12/31/22 00:00:00:000000, Furnace Paycheck, 101.5, 21, 
 #=4!y, 12/31/22 00:00:00:000000, Artlab Paycheck, 60.0, artlab, 
-#=5$0, 12/31/22 00:00:00:000000, Christmas Money, 160.0, spendings, I got some christmas money from Nana and Duck for christmas, so that's what this is

@@ -34,12 +34,8 @@ class ControllerInstance:
 				self.help()
 			case "deposit":#
 				self.deposit()
-				#this is the way of keeping track of the current instance of the program.
-				self.save()
 			case "withdraw":#
 				self.withdraw()
-				#this is the way of keeping track of the current instance of the program.
-				self.save()
 			case "create":#
 				self.create()
 			case "display":#
@@ -119,8 +115,8 @@ class ControllerInstance:
 	"""
 		automatically handle transactions such as deposits or withdrawals within this function. It handles almost exactly like inputVal, just without user prompts.
 	"""
-	def autoInputVal(self, id, datetime, name, value, accountName):
-		self.history.append([id, datetime, name, value, accountName])
+	def autoInputVal(self, id, datetime, name, value, accountName, notes):
+		self.history.append([id, datetime, name, value, accountName, notes])
 
 		if self.contList.itemInList(accountName):
 			index = self.contList.indexItem(accountName)
@@ -183,7 +179,9 @@ class ControllerInstance:
 				date = datetime.now()
 			self.history.append([self.IDGen.generate_id(), date, transactionName, value * typeMult, itemName, notes])
 		else:
-			print(f"{itemName} is not a valid option")
+			os.system("cls")
+			print(f"{itemName} is not a valid account or container option.")
+			return
 
 
 		if self.contList.itemInList(itemName):
@@ -202,6 +200,8 @@ class ControllerInstance:
 					self.acctList.list[i].addVal(0)
 
 		gb.COM_INSTANCE += 1
+		#this is the way of keeping track of the current instance of the program.
+		self.save()
 
 	"""
 		Deposit money into specific accounts or containers based on user input
@@ -224,12 +224,14 @@ class ControllerInstance:
 		match str.lower(command):
 			case "account":
 				self.acctList.newItem(Account(input("What would you like to call this account?\n"), len(self.history)))
+				self.save()
 			case "container":
 				#When creating a container, the user MUST define which accounts or other containers get money from this container.
 				container = Container(input("What would you like to call this container?\n"))
 				self.containerPercentage(container)
 				#only after defining those values, is the container added to the container list.
 				self.contList.newItem(container)
+				self.save()
 			case _:
 				print(f"I'm sorry, {command} is not an option.")
 
@@ -556,6 +558,10 @@ class ControllerInstance:
 						name = line[2]
 						value = float(line[3])
 						account = line[4]
+						notes = line[5]
+						if len(line) > 6:
+							for i in range(6, len(line)):
+								notes += f", {line[i]}"
 
 						#to interpret datetime information, due to the formating putting the numbers all in the exact same location, the data is interpreted by just getting the exact location of the values.
 						date = datetime(
@@ -568,7 +574,8 @@ class ControllerInstance:
 							microsecond = int(date[18:len(date)])
 							)
 						
-						self.autoInputVal(id, date, name, value, account)
+
+						self.autoInputVal(id, date, name, value, account, notes)
 					# else:
 						# raise TypeError("Looks like somehow the save/load functions aren't communicating properly given the fact that somehow there isn't a loadState???\nEven though the loadstate is defined as the first line of the save...")
 

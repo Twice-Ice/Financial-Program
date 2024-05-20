@@ -57,13 +57,3 @@ TRANSACTIONS
 #+UEZ, 09/02/22 00:00:00:000000, Steam Game, -4.79, spendings, At Sebastian's request, I got Titanfall 2
 #+XvB, 12/31/22 00:00:00:000000, GPU Money Transfer, -52.0, spendings, I was transfering this money to dad's account because I think that he bought the GPU off of amazon and we got it with the family prime account.
 #+_N~, 12/31/22 00:00:00:000000, Moether Mother Ticket, -30.0, spendings, Mother Mother concert tickets, and I split the cost for mine(?) with dad
-#++E#, 09/26/22 00:00:00:000000, Steam Gift Card, -20.0, spendings, I got a steam gift card from micro center
-#+#ZC, 09/27/22 00:00:00:000000, Remainder for Games, -2.98, spendings, Idfk what this was but it was marked as "remaining total for games" in the old spreadsheet and I have no idea what that means lol
-#+$LI, 10/30/22 00:00:00:000000, Artlab Paycheck, 120.0, artlab, 
-#+*&f, 11/21/22 00:00:00:000000, Steam Game, -12.57, spendings, Nuclear Throne
-#=1i2, 11/26/22 00:00:00:000000, Artlab Paycheck, 182.5, artlab, 
-#=2-8, 12/07/22 00:00:00:000000, Steam Game Tax, -0.47, spendings, I got money from Guacamole Shawn, and payed for FEZ with that but then I had to pay for the sales tax so that's what this is.
-#=3_e, 12/16/22 00:00:00:000000, Unbeatable Full Game, -27.0, spendings, I purchased the full game of unbeatable, but since it isn't released yet (at the time of purchase), I didn't get it off of steam.
-#=4xB, 12/31/22 00:00:00:000000, Furnace Paycheck, 101.5, 21, 
-#=4!y, 12/31/22 00:00:00:000000, Artlab Paycheck, 60.0, artlab, 
-#=5$0, 12/31/22 00:00:00:000000, Christmas Money, 160.0, spendings, I got some christmas money from Nana and Duck for christmas, so that's what this is

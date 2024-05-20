@@ -1,0 +1,49 @@
+ITEMS
+Account, IRA
+Account, Spendings
+Account, College
+Account, ArtLab Taxes
+Container, 21, IRA; 0.5, Spendings; 0.25, College; 0.25
+Container, ArtLab, Artlab Taxes; 0.3, IRA; 0.35, Spendings; 0.175, college; 0.175
+TRANSACTIONS
+#TlA6, 04/22/21 00:00:00:000000, Paycheck, 234.63, 21
+#TAD0, 05/09/21 00:00:00:000000, Steam Game, -9.99, spendings
+#TDf3, 05/09/21 00:00:00:000000, Steam Game, -7.99, spendings
+#TDWx, 05/23/21 00:00:00:000000, Cash Deposit, 25.0, 21
+#TKGc, 05/25/21 00:00:00:000000, Steam Game, -31.98, spendings
+#TQUA, 05/25/21 00:00:00:000000, Leo's GoFundMe, -6.0, spendings
+#TRJQ, 06/05/21 00:00:00:000000, Paycheck, 63.72, 21
+#TSqG, 06/05/21 00:00:00:000000, Paycheck, 38.97, 21
+#TT7@, 06/07/21 00:00:00:000000, Steam Game, -9.99, spendings
+#TTVt, 06/09/21 00:00:00:000000, Steam Game, -29.99, spendings
+#TUlK, 06/29/21 00:00:00:000000, Paycheck, 172.1, 21
+#TWw&, 06/29/21 00:00:00:000000, Paycheck, 188.29, 21
+#TX-8, 06/30/21 00:00:00:000000, Newegg PC part, -23.9, spendings
+#TYZd, 07/08/21 00:00:00:000000, Paycheck, 365.23, 21
+#TZ#6, 07/10/21 00:00:00:000000, Amazon Purchase, -118.24, spendings
+#T-LF, 07/12/21 00:00:00:000000, Steam Game, -4.99, spendings
+#T_u6, 07/20/21 00:00:00:000000, Nintendo Game, -1.62, spendings
+#T+DR, 07/20/21 00:00:00:000000, Nintendo Game, -2.09, spendings
+#T=2C, 07/20/21 00:00:00:000000, Nintendo Game, -7.86, spendings
+#T@Bb, 07/20/21 00:00:00:000000, Nintendo Game, -2.0, spendings
+#T@>H, 07/20/21 00:00:00:000000, Nintendo Game, -19.63, spendings
+#T#KI, 08/13/21 00:00:00:000000, Steam Game, -14.99, spendings
+#T$*i, 08/20/21 00:00:00:000000, VRV, -10.84, spendings
+#T%W6, 10/04/21 00:00:00:000000, Nintendo Game, -62.27, spendings
+#T*S7, 10/15/21 00:00:00:000000, Steam Game, -4.99, spendings
+#T<qz, 10/15/21 00:00:00:000000, Steam Game, -2.99, spendings
+#T<^R, 10/17/21 00:00:00:000000, Steam Game, -3.74, spendings
+#T>LJ, 11/19/21 00:00:00:000000, Steam Game, -4.99, spendings
+#T~lD, 11/29/21 00:00:00:000000, Steam Game, -7.98, spendings
+#T~%E, 12/03/21 00:00:00:000000, Steam Game, -5.09, spendings
+#U2mc, 12/22/21 00:00:00:000000, Switch Adapter, -21.59, spendings
+#U32U, 12/23/21 00:00:00:000000, Paycheck, 187.72, 21
+#U4Er, 12/23/21 00:00:00:000000, Paycheck, 136.65, 21
+#U5=p, 12/23/21 00:00:00:000000, Paycheck, 283.68, 21
+#U8VU, 12/23/21 00:00:00:000000, Paycheck, 279.02, 21
+#U9Nu, 12/31/21 00:00:00:000000, EpicGames Games, -19.96, spending
+#_RQG, 03/20/22 00:00:00:000000, BoTW DLC, -20.95, spendings
+#_VPZ, 03/31/22 00:00:00:000000, Phone Bill Shenanigans, -50.0, college
+#_WC~, 03/31/22 00:00:00:000000, Phone Bill Transfer, 50.0, spendings
+#_YTX, 04/14/22 00:00:00:000000, IRA Transaction, -600.0, IRA, 
+#_Zn7, 04/18/22 00:00:00:000000, Steam Game, -4.99, spendings, Devil Daggers

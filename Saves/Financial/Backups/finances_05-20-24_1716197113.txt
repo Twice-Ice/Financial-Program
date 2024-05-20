@@ -42,28 +42,11 @@ TRANSACTIONS
 #U5=p, 12/23/21 00:00:00:000000, Paycheck, 283.68, 21, 
 #U8VU, 12/23/21 00:00:00:000000, Paycheck, 279.02, 21, 
 #U9Nu, 12/31/21 00:00:00:000000, EpicGames Games, -19.96, spendings, GTA V, Lifeslide, Stranded Deep, and The End is Nigh
-#_RQG, 03/20/22 00:00:00:000000, BoTW DLC, -20.95, spendings, I got the BoTW DLC on the Wii U right before all access to the Wii U shop closed down, and this was all just so that I could play the full game without buying it again.
-#_VPZ, 03/31/22 00:00:00:000000, Phone Bill Shenanigans, -50.0, college, Ok this is a weird reminant from the old spreadsheets that I was originally using. I paid 100 in cash to mom for phone expenses, but since I never used my phone expenses for anything different, this was the only transaction for the phone expenses. Because of this, I justified giving 100 in cash to mom by moving 100 over from the phone expenses account to my personal spendings account. I have moved the 5% for phone expenses to college instead now, but this money had to come from somewhere so that's why this happened.
-#_WC~, 03/31/22 00:00:00:000000, Phone Bill Transfer, 50.0, spendings, Check $_VPZ for details 
+#_RQG, 03/20/22 00:00:00:000000, BoTW DLC, -20.95, spendings, 
+#_VPZ, 03/31/22 00:00:00:000000, Phone Bill Shenanigans, -50.0, college, 
+#_WC~, 03/31/22 00:00:00:000000, Phone Bill Transfer, 50.0, spendings, 
 #_YTX, 04/14/22 00:00:00:000000, IRA Transaction, -600.0, IRA, 
-#_Zn7, 04/18/22 00:00:00:000000, Steam Game, -4.99, spendings, Devil Daggers
+#_Zn7, 04/18/22 00:00:00:000000, Steam Game, -4.99, spendings, 
 #_<pA, 04/28/22 00:00:00:000000, Cash Deposit, 80.0, 21, 
 #_>jc, 05/03/22 00:00:00:000000, Simpad Nano, -33.8, spendings, This was the little 2 button keyboard for Unbeatable that I purchased
-#_~D8, 06/12/22 00:00:00:000000, Steam Game, -8.98, spendings, Fire and Ice + the DLC for the gam
-#+LNg, 06/25/22 00:00:00:000000, Birthday Money, 100.0, spendings, This was a check from Nana and Duck
-#+PBQ, 07/05/22 00:00:00:000000, Steam Game, -8.99, spendings, Rain World
-#+Q71, 08/15/22 00:00:00:000000, Steam Game, -24.99, spendings, Cult of the Lamb
-#+S7I, 08/19/22 00:00:00:000000, Gift for Rowan, -14.97, spendings, 
-#+UEZ, 09/02/22 00:00:00:000000, Steam Game, -4.79, spendings, At Sebastian's request, I got Titanfall 2
-#+XvB, 12/31/22 00:00:00:000000, GPU Money Transfer, -52.0, spendings, I was transfering this money to dad's account because I think that he bought the GPU off of amazon and we got it with the family prime account.
-#+_N~, 12/31/22 00:00:00:000000, Moether Mother Ticket, -30.0, spendings, Mother Mother concert tickets, and I split the cost for mine(?) with dad
-#++E#, 09/26/22 00:00:00:000000, Steam Gift Card, -20.0, spendings, I got a steam gift card from micro center
-#+#ZC, 09/27/22 00:00:00:000000, Remainder for Games, -2.98, spendings, Idfk what this was but it was marked as "remaining total for games" in the old spreadsheet and I have no idea what that means lol
-#+$LI, 10/30/22 00:00:00:000000, Artlab Paycheck, 120.0, artlab, 
-#+*&f, 11/21/22 00:00:00:000000, Steam Game, -12.57, spendings, Nuclear Throne
-#=1i2, 11/26/22 00:00:00:000000, Artlab Paycheck, 182.5, artlab, 
-#=2-8, 12/07/22 00:00:00:000000, Steam Game Tax, -0.47, spendings, I got money from Guacamole Shawn, and payed for FEZ with that but then I had to pay for the sales tax so that's what this is.
-#=3_e, 12/16/22 00:00:00:000000, Unbeatable Full Game, -27.0, spendings, I purchased the full game of unbeatable, but since it isn't released yet (at the time of purchase), I didn't get it off of steam.
-#=4xB, 12/31/22 00:00:00:000000, Furnace Paycheck, 101.5, 21, 
-#=4!y, 12/31/22 00:00:00:000000, Artlab Paycheck, 60.0, artlab, 
-#=5$0, 12/31/22 00:00:00:000000, Christmas Money, 160.0, spendings, I got some christmas money from Nana and Duck for christmas, so that's what this is
+#_~D8, 06/12/22 00:00:00:000000, Steam Game, -8.98, spendings, Fire and Ice + the DLC for the game
