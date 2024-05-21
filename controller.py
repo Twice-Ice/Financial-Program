@@ -401,8 +401,7 @@ class ControllerInstance:
 			#Adds all of these stats to the list for later printing
 			printList.append([transactionID, date, transactionName, inputVal, outputVal, account, balance])
 
-		#Defines the item values at each point in the history for every item after the default items in itemList.
-		for i in range(gb.COM_INSTANCE):
+			#Defines the item values at each point in the history for every item after the default items in itemList.
 			for j in range(baseItemListLen, len(itemList)):
 				itemType, itemIndex = self.getItemInfo(itemList[j])
 				if itemType == Account:
@@ -410,7 +409,7 @@ class ControllerInstance:
 				elif itemType == Container:
 					value = self.contList.list[itemIndex].history.getSum(i)
 				printList[i].append(math.ceil(value*100)/100)
-
+			
 		#Determines the maximum size of each column in the itemList. This is then used later for spacing each item properly.
 		columnSize = []
 		for j in range(len(itemList)):
