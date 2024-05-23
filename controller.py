@@ -375,6 +375,8 @@ class ControllerInstance:
 		printList = []
 		#defines every input interaction case for all accounts with printList
 		for i in range(gb.COM_INSTANCE):
+			#boolean for checking if there was ever any change between instances, it is assumed that there is a change.
+			instanceHadChange = True
 			#the id of the transaction
 			transactionID = self.history[i][0]
 			#The date in a displayable format, it is stored in datetime in case data manipulation is required without risking mixing up the order of all deposits.
@@ -399,17 +401,55 @@ class ControllerInstance:
 			balance = self.getBal(i)
 
 			#Adds all of these stats to the list for later printing
-			printList.append([transactionID, date, transactionName, inputVal, outputVal, account, balance])
+			instanceList = [transactionID, date, transactionName, inputVal, outputVal, account, balance]
 
 			#Defines the item values at each point in the history for every item after the default items in itemList.
 			for j in range(baseItemListLen, len(itemList)):
 				itemType, itemIndex = self.getItemInfo(itemList[j])
 				if itemType == Account:
 					value = self.acctList.list[itemIndex].getSum(i)
+
+					#only in the case that this is the first and therefor relevant item, then it will affect if the instance is printed or not.
+					if j == baseItemListLen:
+						#checks if there has been any change between instances.
+						if value == self.acctList.list[itemIndex].getSum(i-1):
+							instanceHadChange = False
+
 				elif itemType == Container:
 					value = self.contList.list[itemIndex].history.getSum(i)
-				printList[i].append(math.ceil(value*100)/100)
-			
+
+					#only in the case that this is the first and therefor relevant item, then it will affect if the instance is printed or not.
+					if j == baseItemListLen:
+						#the way to check is to check if there is an equal amount of same values as there is to the length of all the items you are printing.
+						#do note that we don't have to check the container itself for any change because all change that it has is linked to each item contained within it.
+						#However we should be checking each item contained rather than the container itself because the value of the container isn't impacted by external withdrawals or direct account deposits.
+						SameValues = 0
+						#going through the lists, for each isntance that is the same, it is added to the tally checker of SameValues.
+						for item in self.contList.list[itemIndex].itemList:
+							itemName = item[0]
+							#pretty much the same code as above for looping through, but this time we're checking the instances for any change.
+							localItemType, localItemIndex = self.getItemInfo(itemName)
+							if localItemType == Account:
+								curVal = self.acctList.list[localItemIndex].getSum(i)
+								pastVal = self.acctList.list[localItemIndex].getSum(i-1)
+							elif localItemType == Container:
+								curVal = self.contList.list[localItemIndex].history.getSum(i)
+								pastVal = self.contList.list[localItemIndex].history.getSum(i-1)
+							if curVal == pastVal:
+								SameValues += 1
+
+						#if all of the values are the same same as the length of the itemList of the container, then the instance is removed.
+						if SameValues == len(self.contList.list[itemIndex].itemList):
+							instanceHadChange = False
+							# print(f"{transactionID} was removed from the print list.")
+
+				instanceList.append(math.ceil(value*100)/100)
+
+			#if there was a change between instances for all items held within the container then you would print it. Otherwise not.
+			if instanceHadChange:
+				printList.append(instanceList)
+
+		
 		#Determines the maximum size of each column in the itemList. This is then used later for spacing each item properly.
 		columnSize = []
 		for j in range(len(itemList)):
@@ -438,6 +478,7 @@ class ControllerInstance:
 				lineStr += f"| {self.spaceProperly(str(printList[i][j]), columnSize[j])} "
 			lineStr += "|"
 			print(lineStr)
+		print(len(printList))
 
 	"""
 		A function to call so that I can activate a breakpoint
@@ -557,10 +598,15 @@ class ControllerInstance:
 						name = line[2]
 						value = float(line[3])
 						account = line[4]
-						notes = line[5]
-						if len(line) > 6:
-							for i in range(6, len(line)):
-								notes += f", {line[i]}"
+						if len(line) > 5:
+							notes = line[5]
+							if len(line) > 6:
+								for i in range(6, len(line)):
+									notes += f", {line[i]}"
+						else:
+							notes = ""
+							if account[len(account)-1:len(account)] == ",":
+								account = account[:len(account)-1]
 
 						#to interpret datetime information, due to the formating putting the numbers all in the exact same location, the data is interpreted by just getting the exact location of the values.
 						date = datetime(
