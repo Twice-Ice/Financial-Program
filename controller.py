@@ -359,7 +359,6 @@ class ControllerInstance:
 		#gets the account that the user would like to choose
 		itemType, chosenAccount = self.chooseAccount("What account would you like to view?")
 		# self.question("Would you like to view another account? (y/n)", ["y", "n"], clearStart = True)
-		os.system("cls")
 
 		#adds the chosen account to the printList, including all accounts within the chosen item if it's a container.
 		if itemType == Account:
@@ -372,6 +371,30 @@ class ControllerInstance:
 			for i in range(len(chosenContainer.itemList)):
 				itemList.append(chosenContainer.itemList[i][0])
 
+		os.system("cls")
+		#questions the user on how many isntances they would like to display. (default is 10)
+		def instanceQuestion():
+			command = input("How many instances back would you like to see?\n(\"All\" for all instances, [ENTER] for the last 10, or any number greater than 0.)\n")
+			if command.lower() == "all":
+				return 0
+			elif command == "":
+				return 10
+			else:
+				try:
+					instances = int(command)
+					if instances <= 0:
+						os.system("cls")
+						print(f"{command} isn't a valid value to be chosen. Please choose a value greater than 0.\n")
+						return instanceQuestion()
+					else:
+						return instances
+				except:
+					os.system("cls")
+					print(f"{command} isn't a valid option.\n")
+					return instanceQuestion()
+		displayedInstances = instanceQuestion()
+
+		os.system("cls")
 		printList = []
 		#defines every input interaction case for all accounts with printList
 		for i in range(gb.COM_INSTANCE):
@@ -460,6 +483,7 @@ class ControllerInstance:
 					size = itemSize
 			columnSize.append(size)
 
+		print(f"DISPLAYING: {chosenAccount}\n\n")
 
 		#prints the name of each item being printed and then a dividing line
 		namesStr = ""
@@ -472,13 +496,13 @@ class ControllerInstance:
 		print(namesStr)
 
 		#prints all item information divided by bars like such: "|  |"
-		for i in range(len(printList)):
+		for i in range(len(printList) - displayedInstances if displayedInstances > 0 else 0, len(printList)):
 			lineStr = ""
 			for j in range(len(printList[i])):
 				lineStr += f"| {self.spaceProperly(str(printList[i][j]), columnSize[j])} "
 			lineStr += "|"
 			print(lineStr)
-		print(len(printList))
+		# print(len(printList))
 
 	"""
 		A function to call so that I can activate a breakpoint
