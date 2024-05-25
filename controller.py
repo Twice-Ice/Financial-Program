@@ -350,6 +350,15 @@ class ControllerInstance:
 		return " " * leftSize + inputedString + " " * rightSize
 
 	"""
+		Returns a dividing line with the size of len.
+	"""
+	def printDivLine(self, len):
+		divLineStr = "|"
+		for i in range(len - 2):
+			divLineStr += "-"
+		return f"{divLineStr}|"
+
+	"""
 		Displays the date, value, account deposited into, and data for where the money went/left from.
 	"""
 	def display(self):
@@ -394,85 +403,91 @@ class ControllerInstance:
 					return instanceQuestion()
 		displayedInstances = instanceQuestion()
 
+		#returns the formated list of all relevant information for the instances displayed.
+		def formatHistoryData(limit : bool = True):
+			printList = []
+			for i in range(gb.COM_INSTANCE):
+				#boolean for checking if there was ever any change between instances, it is assumed that there is a change.
+				instanceHadChange = True
+				#the id of the transaction
+				transactionID = self.history[i][0]
+				#The date in a displayable format, it is stored in datetime in case data manipulation is required without risking mixing up the order of all deposits.
+				date = str(self.history[i][1].strftime("%b, %d %Y"))
+				#name of the transaction
+				transactionName = self.history[i][2]
+				#Initializes inputVal and outputVal variables to properly display the money going in and out of all accounts.
+				money = self.history[i][3]
+				if money > 0:
+					inputVal = str(abs(money))
+					outputVal = ""
+				elif money < 0:
+					inputVal = ""
+					outputVal = str(abs(money))
+				else:
+					inputVal = ""
+					outputVal = ""
+				
+				#The name of the account which was deposited to
+				account = self.history[i][4]
+
+				balance = self.getBal(i)
+
+				#Adds all of these stats to the list for later printing
+				instanceList = [transactionID, date, transactionName, inputVal, outputVal, account, balance]
+
+				#Defines the item values at each point in the history for every item after the default items in itemList.
+				for j in range(baseItemListLen, len(itemList)):
+					itemType, itemIndex = self.getItemInfo(itemList[j])
+					if itemType == Account:
+						value = self.acctList.list[itemIndex].getSum(i)
+
+						#only in the case that this is the first and therefor relevant item, then it will affect if the instance is printed or not.
+						if j == baseItemListLen:
+							#checks if there has been any change between instances.
+							if value == self.acctList.list[itemIndex].getSum(i-1) and limit:
+								instanceHadChange = False
+
+					elif itemType == Container:
+						value = self.contList.list[itemIndex].history.getSum(i)
+
+						#only in the case that this is the first and therefor relevant item, then it will affect if the instance is printed or not.
+						if j == baseItemListLen:
+							#the way to check is to check if there is an equal amount of same values as there is to the length of all the items you are printing.
+							#do note that we don't have to check the container itself for any change because all change that it has is linked to each item contained within it.
+							#However we should be checking each item contained rather than the container itself because the value of the container isn't impacted by external withdrawals or direct account deposits.
+							SameValues = 0
+							#going through the lists, for each isntance that is the same, it is added to the tally checker of SameValues.
+							for item in self.contList.list[itemIndex].itemList:
+								itemName = item[0]
+								#pretty much the same code as above for looping through, but this time we're checking the instances for any change.
+								localItemType, localItemIndex = self.getItemInfo(itemName)
+								if localItemType == Account:
+									curVal = self.acctList.list[localItemIndex].getSum(i)
+									pastVal = self.acctList.list[localItemIndex].getSum(i-1)
+								elif localItemType == Container:
+									curVal = self.contList.list[localItemIndex].history.getSum(i)
+									pastVal = self.contList.list[localItemIndex].history.getSum(i-1)
+								if curVal == pastVal:
+									SameValues += 1
+
+							#if all of the values are the same same as the length of the itemList of the container, then the instance is removed.
+							if SameValues == len(self.contList.list[itemIndex].itemList) and limit:
+								instanceHadChange = False
+								# print(f"{transactionID} was removed from the print list.")
+
+					instanceList.append(math.ceil(value*100)/100)
+
+				#if there was a change between instances for all items held within the container then you would print it. Otherwise not.
+				if instanceHadChange:
+					printList.append(instanceList)
+
+			return printList
+
 		os.system("cls")
-		printList = []
 		#defines every input interaction case for all accounts with printList
-		for i in range(gb.COM_INSTANCE):
-			#boolean for checking if there was ever any change between instances, it is assumed that there is a change.
-			instanceHadChange = True
-			#the id of the transaction
-			transactionID = self.history[i][0]
-			#The date in a displayable format, it is stored in datetime in case data manipulation is required without risking mixing up the order of all deposits.
-			date = str(self.history[i][1].strftime("%b, %d %Y"))
-			#name of the transaction
-			transactionName = self.history[i][2]
-			#Initializes inputVal and outputVal variables to properly display the money going in and out of all accounts.
-			money = self.history[i][3]
-			if money > 0:
-				inputVal = str(abs(money))
-				outputVal = ""
-			elif money < 0:
-				inputVal = ""
-				outputVal = str(abs(money))
-			else:
-				inputVal = ""
-				outputVal = ""
-			
-			#The name of the account which was deposited to
-			account = self.history[i][4]
+		printList = formatHistoryData()
+		completePrintList = formatHistoryData(False)
 
-			balance = self.getBal(i)
-
-			#Adds all of these stats to the list for later printing
-			instanceList = [transactionID, date, transactionName, inputVal, outputVal, account, balance]
-
-			#Defines the item values at each point in the history for every item after the default items in itemList.
-			for j in range(baseItemListLen, len(itemList)):
-				itemType, itemIndex = self.getItemInfo(itemList[j])
-				if itemType == Account:
-					value = self.acctList.list[itemIndex].getSum(i)
-
-					#only in the case that this is the first and therefor relevant item, then it will affect if the instance is printed or not.
-					if j == baseItemListLen:
-						#checks if there has been any change between instances.
-						if value == self.acctList.list[itemIndex].getSum(i-1):
-							instanceHadChange = False
-
-				elif itemType == Container:
-					value = self.contList.list[itemIndex].history.getSum(i)
-
-					#only in the case that this is the first and therefor relevant item, then it will affect if the instance is printed or not.
-					if j == baseItemListLen:
-						#the way to check is to check if there is an equal amount of same values as there is to the length of all the items you are printing.
-						#do note that we don't have to check the container itself for any change because all change that it has is linked to each item contained within it.
-						#However we should be checking each item contained rather than the container itself because the value of the container isn't impacted by external withdrawals or direct account deposits.
-						SameValues = 0
-						#going through the lists, for each isntance that is the same, it is added to the tally checker of SameValues.
-						for item in self.contList.list[itemIndex].itemList:
-							itemName = item[0]
-							#pretty much the same code as above for looping through, but this time we're checking the instances for any change.
-							localItemType, localItemIndex = self.getItemInfo(itemName)
-							if localItemType == Account:
-								curVal = self.acctList.list[localItemIndex].getSum(i)
-								pastVal = self.acctList.list[localItemIndex].getSum(i-1)
-							elif localItemType == Container:
-								curVal = self.contList.list[localItemIndex].history.getSum(i)
-								pastVal = self.contList.list[localItemIndex].history.getSum(i-1)
-							if curVal == pastVal:
-								SameValues += 1
-
-						#if all of the values are the same same as the length of the itemList of the container, then the instance is removed.
-						if SameValues == len(self.contList.list[itemIndex].itemList):
-							instanceHadChange = False
-							# print(f"{transactionID} was removed from the print list.")
-
-				instanceList.append(math.ceil(value*100)/100)
-
-			#if there was a change between instances for all items held within the container then you would print it. Otherwise not.
-			if instanceHadChange:
-				printList.append(instanceList)
-
-		
 		#Determines the maximum size of each column in the itemList. This is then used later for spacing each item properly.
 		columnSize = []
 		for j in range(len(itemList)):
@@ -482,6 +497,13 @@ class ControllerInstance:
 				if itemSize > size:
 					size = itemSize
 			columnSize.append(size)
+		#accounts for the final column which isn't included in the default list, and adds these lengths into account for the column sizes.
+		LastColumn = completePrintList[len(completePrintList) - 1]
+		for i in range(len(LastColumn)):
+			size = len(str(LastColumn[i]))
+			if size > columnSize[i]:
+				columnSize[i] = size
+
 
 		print(f"DISPLAYING: {chosenAccount}\n\n")
 
@@ -489,11 +511,10 @@ class ControllerInstance:
 		namesStr = ""
 		for i in range(len(itemList)):
 			namesStr += f"| {self.spaceProperly(str(itemList[i]), columnSize[i])} "
-		namesStr += "|\n|"
-		for i in range(2, len(namesStr) - 2):
-			namesStr += "-"
+		lineLen = len(namesStr) + 1
 		namesStr += "|"
 		print(namesStr)
+		print(self.printDivLine(lineLen))
 
 		#prints all item information divided by bars like such: "|  |"
 		for i in range(len(printList) - displayedInstances if displayedInstances > 0 else 0, len(printList)):
@@ -503,6 +524,12 @@ class ControllerInstance:
 			lineStr += "|"
 			print(lineStr)
 		# print(len(printList))
+
+		print(self.printDivLine(lineLen))
+		lineStr = ""
+		for i in range(len(completePrintList[len(completePrintList[len(completePrintList) - 1])])):
+			lineStr += f"| {self.spaceProperly(str(completePrintList[len(completePrintList) - 1][i]), columnSize[i])} "
+		print(f"{lineStr}|")
 
 	"""
 		A function to call so that I can activate a breakpoint
