@@ -27,6 +27,9 @@ class ControllerInstance:
 		# self.autoCreate("Container", "Misc", [["HRT", .5], ["personal", .5]])
 
 	def update(self):
+		# fakeItemList = Container("TestList")
+		# self.containerPercentage(fakeItemList)
+
 		command = input("\n\nWhat would you like to do?\n")
 		os.system("cls")
 		match str.lower(command):
@@ -84,38 +87,69 @@ class ControllerInstance:
 
 		return totalStr
 
+	"""
+		prints all options that can use chosen by the user when interacting with the application.
+	"""
 	def help(self):
 		options = {
+			"Help" : "You're here!",
 			"Deposit" : "Deposit an amount into an account or container.",
+			"Withdraw" : "Withdraw an amount from an account or container.",
 			"Create" : "Create an account or container.",
+			"Display" : "Displays a number of instances from the transaction history for the user to see the values over a period of time.",
+			"Val" : "Displays the current value of an account or container.",
+			"Edit" : "[UNDER CONSTRUCTION]",
+			"Save" : "Saves the user's data from the current instance of the program. You don't have to use this however because the program auto saves after every transaction and creation.",
+			"Load" : "Loads the user's data. [UNDER CONSTRUCTION], eventually specific saves will be selectable.",
+			"Quit" : "Quits the program. Does not save before quiting.",
+			"Print" : "Displays the location of the save file within file explorer.",
+			"Bal" : "Displays the balance of all accounts at the most recent instance. This information is also displayed when just displaying as normal."
 		}
 
 		keys = []
 		for key, answer in options.items():
 			keys.append(key)
 
-		def specifics():
-			os.system("cls")
-			print("Here are all possible commands:")
-			print("(Note: These ARE case sensitive when inputing.)\n")
-			for key in keys:
-				print(f"   {key}")
-
-			command = input("Would you like to view the specifics on an option?\n")
-			if command in keys:
-				print(options[command])
-			elif command.lower() == "quit":
+		def specifics(clearScreen : bool = False):
+			if clearScreen:
 				os.system("cls")
-				return
-			else:
-				print(f"{command} isn't a valid option, you can type \"quit\" to leave help.")
-				return specifics()
-		specifics()
+			print("Here are all possible commands:")
+			for key in keys:
+				print(f"\t{key}")
+
+			command = input("Would you like to view the specifics on an option? (type \"Quit Help\" to exit this menu)\n")
+
+			#makes a list of all lowercase keys to ignore case sensitivity.
+			lowerKeys = []
+			for key in keys:
+				lowerKeys.append(key.lower())
+			try:
+				#the chosen option was valid
+				if command.lower() in lowerKeys:
+					os.system("cls")
+					index = lowerKeys.index(command.lower())
+					print(f"{options[keys[index]]}\n")
+					return specifics()
+				#the user wanted to quit the program
+				elif command.lower() == "quit help":
+					os.system("cls")
+					return
+				#the user's choice wasn't valid
+				else:
+					os.system("cls")
+					print(f"{command} isn't a valid option, you can type \"Quit Help\" to leave the help menu.\n")
+					return specifics()
+			except:
+					#the user's choice wasn't valid and couldn't be .lower()-ed
+					os.system("cls")
+					print(f"{command} isn't a valid option, you can type \"Quit Help\" to leave the help menu.\n")
+					return specifics()
+		specifics(clearScreen = True)
 
 	"""
 		automatically handle transactions such as deposits or withdrawals within this function. It handles almost exactly like inputVal, just without user prompts.
 	"""
-	def autoInputVal(self, id, datetime, name, value, accountName, notes):
+	def autoInputVal(self, id, datetime, name, value, accountName, notes, incrementComInstance : bool = True):
 		self.history.append([id, datetime, name, value, accountName, notes])
 
 		if self.contList.itemInList(accountName):
@@ -134,7 +168,8 @@ class ControllerInstance:
 					self.acctList.list[i].addVal(0)
 
 		#gotta do this, not before the other stuff though bcs it will be delayed by one COM_INSTANCE rather than applying after and it's proper.
-		gb.COM_INSTANCE += 1
+		if incrementComInstance:
+			gb.COM_INSTANCE += 1
 
 	"""
 		A combined way of handling deposits and withdrawals by prompting the user with questions such as q1 and q2.
@@ -254,25 +289,143 @@ class ControllerInstance:
 				raise TypeError(f"{accountContainer} isn't an option bruh")
 
 	"""
+		Prompts the user with a yes or no question. The user can always press enter to just use the default option.
+	"""
+	def yesNo(self, questionStr, clearScreen : bool = True, default : bool = True):
+		if clearScreen:
+			os.system("cls")
+		command = input(questionStr)
+		try:
+			command = command.lower()
+			match command:
+				case "y":
+					return True
+				case "n":
+					return False
+				case "":
+					return default
+				case _:
+					return self.yesNo(f"{command} is not a valid option, please try again.\n\n{questionStr}")
+		except:
+			return self.yesNo(f"{command} is not a valid option, please try again.\n\n{questionStr}")
+
+	"""
 		Define the percentages and accounts that a container contributes to.
 
 		container = the container which you are defining it's percentages and accounts.
 	"""
 	def containerPercentage(self, container : Container):
-		#this function allows for the name and percent of accounts/containers to be defined within the container's own system.
-		name = input(f"What account or container would you like to add into {container.name}?\n")
-		percent = input(f"What percent would you like this item to recieve when money is depositied into {container.name}?\n")
-		container.itemList.append([name, percent])
-		command = input(f"Would you like to add another item to {container.name}'s acctList? (y/n)\n")
-		#this function is recursive and can be called as many times as the user wants to use it.
-		match str.lower(command):
-			case "y":
-				self.containerPercentage(container)
-			case "n":
-				return
-			case _:
-				print(f"{command} wasn't an option, so this is interpreted as a No.")
-	
+		#This is where all of the logic and recursion happens, making sure to properly define the item list for container.
+		def definePercentagesList(sumPercent : float = 0, percentagesList : list = []):
+			os.system("cls")
+			#prints the sum percentage, and the list of where the sum comes from. (including what accounts are associated with what values)
+			def printListAndSum():
+				print(f"Sum Percentage = {self.halfRound(sumPercent, 8)}")
+				remainingPercent = self.halfRound(1 - sumPercent, 8)
+				#if the percentage is over 1, then it says so, if under, the remaining percent is printed, and if 0, then nothing is printed.
+				if remainingPercent > 0:
+					print(f"Remaining percentage available = {remainingPercent}")
+				elif remainingPercent < 0:
+					print(f"Remaining percentage over by {abs(remainingPercent)} percent. Please edit or remove a value from the list to get a sum percentage of 1.")
+				#prints the list as one string.
+				listStr = ""
+				for item in percentagesList:
+					listStr += f"[{item[0]} : {item[1]}]\n"
+				print(listStr)
+			printListAndSum()
+			#gets the item information with chooseAccount.
+			itemType, itemName = self.chooseAccount(f"What item would you like to add or edit for {container.name}'s item list?\n")
+			#This is where all of the logic and recursion relating to the percentage value happens. The user can also choose to delete the selected item from here.
+			def percentQuestion(name):
+				printListAndSum()
+				#promopting question
+				percent = input(f"What percent would you like {name} to be given?\n(format: 1.00 = 100%,\t\"del\" or \"delete\" to remove {name} from {container.name}'s item list.)\n")
+				#tries to check if the percent is a valid value that can be used.
+				try:
+					percent = float(percent)
+					#no more than 1 and no less than 0. Keeping the 0 because then the user can have the item included in the "print list" to see when displaying values.
+					if percent >= 0 and percent <= 1:
+						return percent
+					else:
+						os.system("cls")
+						print(f"{percent} is not a valid value, please input a value between 0.00 and 1.00.\n")
+						return percentQuestion(name)
+				#any case where percent had a character in the string, wasn't able to be turned into a float, etc.
+				except:
+					try:
+						#first tries to see if the error came because the user was trying to delete the instance
+						percent = percent.lower()
+						if percent == "del" or "delete":
+							#confirms one last time if the user wants to actually delete the item. If not, the percentage is just asked again.
+							match self.yesNo(f"Are you sure you want to delete {name} from {container.name}'s item list?\n"):
+								case True:
+									return "delete"
+								case False:
+									return percentQuestion(name)
+						#the user wasn't trying to delete the item and just made a string that could be .lower()-ed by chance.
+						else:
+							os.system("cls")
+							print(f"An error has occured, {percent} is not a valid value.\n")
+							return percentQuestion(name)
+					#the user inputed some weird characters that couldn't be .lower()-ed and wasn't able to turn percent into a float.
+					except:
+						os.system("cls")
+						print(f"An error has occured, {percent} is not a valid value.\n")
+						return percentQuestion(name)
+					
+			os.system("cls")
+
+			#defines a name list for indexing purposes.
+			nameList = []
+			for item in percentagesList:
+				nameList.append(item[0].lower())
+			#if the item was in the name list, then the user is trying to edit the values and as such will do so from here.
+			if itemName.lower() in nameList:
+				percent = percentQuestion(itemName)
+				#index for specific index accessing when editing or removing values.
+				index = nameList.index(itemName.lower())
+
+				if percent == "delete":
+					#deletes the information by removing all the data that was stored at index.
+					indexValues = percentagesList[index]
+					percentagesList.remove(indexValues)
+				else:
+					#just replaces the data stored at index.
+					percentagesList[index] = [itemName, percent]
+			#the user wasn't trying to edit values and instead was trying to just add a new item to container's item list.
+			else:
+				percent = percentQuestion(itemName)
+
+				if percent == "delete":
+					#when the user tries to delete the item but it wasn't already in the item list.
+					os.system("cls")
+					print("You can't delete something that was never there, you can only delete accounts that were already added in the system.")
+				else:
+					percentagesList.append([itemName, percent])
+
+			#defines the sum percentage after this instance's logic has played out.
+			sumPercent = 0
+			for item in percentagesList:
+				sumPercent += item[1]
+
+			#if the percentage isn't valid to continue, the user is prompted with more items to add or edit for the list.
+			if sumPercent != 1:
+				return definePercentagesList(sumPercent, percentagesList)
+			#if the percent was 1, then the user will be asked if they want to keep editing or not.
+			else:
+				os.system("cls")
+				printListAndSum()
+				match self.yesNo(f"Sum Percentage = {sumPercent}. Would you like to move on [y] or continue editing values [n]?\n", clearScreen = False):
+					#if the user wants to coninue on, the values are returned.
+					case True:
+						return percentagesList
+					#if the user doesn't want to continue, then they are sent back into the state where they are prompted to choose the items.
+					case False:
+						return definePercentagesList(sumPercent, percentagesList)
+		
+		#sets the container's itemList as the list returned from the percentages List.
+		container.itemList = definePercentagesList()
+
 	"""
 		Allows the user to choose an account from all the possible account options.
 		If the user's choice isn't valid, then user is prompted to choose another account option.
@@ -324,7 +477,7 @@ class ControllerInstance:
 			return fail(questionStr, answerType, answerOptions)
 		except:
 			return fail(questionStr, answerType, answerOptions)
-			
+
 	"""
 		gets all relavant item info and returns it.
 		returns itemType, itemIndex.
@@ -341,11 +494,22 @@ class ControllerInstance:
 		Properly spaces out items based on the size inputed so that inputedString is centered between to (semi)equal whitespaces.
 
 		On cases where size is odd, the left side is favored to have 1 more whitespace than the right side.
+		
+		alignment defaults to center, but right and left sides can be used as well, if prompted when the function is called.
 	"""
-	def spaceProperly(self, inputedString, size):
+	def alignText(self, inputedString, size, alignment : str = "center"):
 		size -= len(inputedString)
-		leftSize = math.ceil(size/2)
-		rightSize = math.floor(size/2)
+		if alignment == "center":
+			leftSize = math.ceil(size/2)
+			rightSize = math.floor(size/2)
+		elif alignment == "right":
+			leftSize = size
+			rightSize = 0
+		elif alignment == "left":
+			leftSize = 0
+			rightSize = size
+		else:
+			raise TypeError(f"{alignment} isn't an alignment option.")
 
 		return " " * leftSize + inputedString + " " * rightSize
 
@@ -475,7 +639,7 @@ class ControllerInstance:
 								instanceHadChange = False
 								# print(f"{transactionID} was removed from the print list.")
 
-					instanceList.append(math.ceil(value*100)/100)
+					instanceList.append(self.halfRound(value, 2))
 
 				#if there was a change between instances for all items held within the container then you would print it. Otherwise not.
 				if instanceHadChange:
@@ -510,7 +674,7 @@ class ControllerInstance:
 		#prints the name of each item being printed and then a dividing line
 		namesStr = ""
 		for i in range(len(itemList)):
-			namesStr += f"| {self.spaceProperly(str(itemList[i]), columnSize[i])} "
+			namesStr += f"| {self.alignText(str(itemList[i]), columnSize[i])} "
 		lineLen = len(namesStr) + 1
 		namesStr += "|"
 		print(namesStr)
@@ -520,15 +684,24 @@ class ControllerInstance:
 		for i in range(len(printList) - displayedInstances if displayedInstances > 0 else 0, len(printList)):
 			lineStr = ""
 			for j in range(len(printList[i])):
-				lineStr += f"| {self.spaceProperly(str(printList[i][j]), columnSize[j])} "
-			lineStr += "|"
-			print(lineStr)
+				try: #the item is a number
+					#check for if the item is a number or not.
+					float(printList[i][j])
+					#ending zeros
+					num = str(printList[i][j]).split(".")
+					num[1] = num[1] + "0" * (2 - len(num[1]))
+					num = f"{num[0]}.{num[1]}"
+
+					lineStr += f"| {self.alignText(num, columnSize[j], alignment = "right")} "
+				except: #the item is not a number
+					lineStr += f"| {self.alignText(str(printList[i][j]), columnSize[j])} "
+			print(f"{lineStr}|")
 		# print(len(printList))
 
 		print(self.printDivLine(lineLen))
 		lineStr = ""
 		for i in range(len(completePrintList[len(completePrintList[len(completePrintList) - 1])])):
-			lineStr += f"| {self.spaceProperly(str(completePrintList[len(completePrintList) - 1][i]), columnSize[i])} "
+			lineStr += f"| {self.alignText(str(completePrintList[len(completePrintList) - 1][i]), columnSize[i])} "
 		print(f"{lineStr}|")
 
 	"""
@@ -536,6 +709,16 @@ class ControllerInstance:
 	"""
 	def breakpoint(self):
 		print()
+
+	"""
+		A half round function with n_digits after the decimal being able to be the last digit.
+
+		copy and pasted from codequest notes bcs I'm lazy :)
+	"""
+	def halfRound(self, val:float, n_digits:int = 0):
+		val *= 10**n_digits
+		result = int(val + (0.50002 if val >= 0 else -0.50002))
+		return result / 10**n_digits
 
 	"""
 		dev tool, lets me see what the exact value of an account is without using a breakpoint or going inside of the watch.
@@ -553,12 +736,6 @@ class ControllerInstance:
 		Saves the session data to the default file, only prompting the user to choose where to save if a default file hasn't been previously chosen already.
 	"""
 	def save(self, saveAnimation : bool = False):
-		#copy and pasted from codequest notes bcs I'm lazy :)
-		def halfRound(val:float, n_digits:int = 0):
-			val *= 10**n_digits
-			result = int(val + (0.50002 if val >= 0 else -0.50002))
-			return result / 10**n_digits
-
 		saveData = ""
 		
 		#Items section identifier
@@ -598,7 +775,7 @@ class ControllerInstance:
 			#shows a percentage for how much of the file is saved.
 			os.system("cls")
 			if saveAnimation:
-				print(f"{halfRound(((i+1)/len(self.history))*100, 1)} %")
+				print(f"{self.halfRound(((i+1)/len(self.history))*100, 1)} %")
 
 		#properly saves the data and prompts the user to press enter in order to get out of the save menu.
 		self.file.save(saveData)
@@ -685,6 +862,9 @@ class ControllerInstance:
 	def removeTransaction(self):
 		print("What instance would you like to delete?")
 
+	"""
+		Returns the balance of the sum of all accounts at instance.
+	"""
 	def getBal(self, instance):
 		value = 0
 		for account in self.acctList.list:
