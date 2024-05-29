@@ -39,6 +39,8 @@ class ControllerInstance:
 				self.deposit()
 			case "withdraw":#
 				self.withdraw()
+			case "transfer":
+				self.transfer()
 			case "create":#
 				self.create()
 			case "display":#
@@ -95,6 +97,7 @@ class ControllerInstance:
 			"Help" : "You're here!",
 			"Deposit" : "Deposit an amount into an account or container.",
 			"Withdraw" : "Withdraw an amount from an account or container.",
+			"Transfer" : "Transfer one value between one item and another item",
 			"Create" : "Create an account or container.",
 			"Display" : "Displays a number of instances from the transaction history for the user to see the values over a period of time.",
 			"Val" : "Displays the current value of an account or container.",
@@ -149,7 +152,7 @@ class ControllerInstance:
 	"""
 		automatically handle transactions such as deposits or withdrawals within this function. It handles almost exactly like inputVal, just without user prompts.
 	"""
-	def autoInputVal(self, id, datetime, name, value, accountName, notes, incrementComInstance : bool = True):
+	def autoTransaction(self, id, datetime, name, value, accountName, notes, incrementComInstance : bool = True):
 		self.history.append([id, datetime, name, value, accountName, notes])
 
 		if self.contList.itemInList(accountName):
@@ -172,9 +175,52 @@ class ControllerInstance:
 			gb.COM_INSTANCE += 1
 
 	"""
+		Transfers a value from one account to the other.
+
+		Does not save as a "transfer" but instead just saves as two transactions.
+	"""
+	def transfer(self):
+		#prompting questions
+		os.system("cls")
+		fromAccount = self.chooseAccount("What account would you like to transfer from?", returnDict = True)
+		os.system("cls")
+		toAccount = self.chooseAccount(f"Transfering from {fromAccount["itemName"]}\n\nWhat account would you like to transfer to?", returnDict = True)
+		value = self.question(f"Transfering from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nHow much would you like to transfer?\n", float, [">=", 0], clearScreen = True)
+		transferName = self.question(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nWhat would you like to call this transaction?\n", str, clearScreen = True)
+		notes = self.question(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nAre there any notes for this Transfer?", str, clearScreen = True)
+		doDate = self.yesNo(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nWould you like to set a specific date?\n[y/n]\n", default = False)
+		#manually setting the date
+		match doDate:
+			case True:
+				#code copied from self.inputVal()
+				os.system("cls")
+				properlyFormated = False
+				while properlyFormated == False:
+					print(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n")
+					dateData = input("Please format as follows:\nMM/DD/YYYY\n")
+					try:
+						dateData = dateData.split("/")
+						date = datetime(int(dateData[2]), int(dateData[0]), int(dateData[1]))
+						properlyFormated = True
+					except:
+						os.system("cls")
+						print(f"{dateData} was not properly formated.")
+			case False:
+				date = datetime.now()
+
+		transferID = self.IDGen.generateID()
+		#automatically generates these two transactions
+		self.autoTransaction(transferID, date, f"TFR : {transferName}", -value, fromAccount["itemName"], f"${value} transfer to {toAccount["itemName"]}, {notes}")
+		self.autoTransaction(transferID, date, f"TFR : {transferName}", value, toAccount["itemName"], f"${value} Transfer from {fromAccount["itemName"]}, {notes}")
+
+		#saves the datae
+		print("Transfered Successfully!")
+		self.save()
+
+	"""
 		A combined way of handling deposits and withdrawals by prompting the user with questions such as q1 and q2.
 	"""
-	def inputVal(self, type, q1, q2):
+	def transaction(self, type, q1, q2):
 		typeMult = 1 if type == "deposit" else -1
 		itemName = input(q1)
 		if self.contList.itemInList(itemName) or self.acctList.itemInList(itemName):
@@ -212,7 +258,7 @@ class ControllerInstance:
 						print(f"{dateData} was not properly formated.")
 			else:
 				date = datetime.now()
-			self.history.append([self.IDGen.generate_id(), date, transactionName, value * typeMult, itemName, notes])
+			self.history.append([self.IDGen.generateID(), date, transactionName, value * typeMult, itemName, notes])
 		else:
 			os.system("cls")
 			print(f"{itemName} is not a valid account or container option.")
@@ -242,13 +288,13 @@ class ControllerInstance:
 		Deposit money into specific accounts or containers based on user input
 	"""
 	def deposit(self): 
-		self.inputVal("deposit", f"Which account would you like to deposit into?\n{self.printContainers()}\n", "How much would you like to deposit into")
+		self.transaction("deposit", f"Which account would you like to deposit into?\n{self.printContainers()}\n", "How much would you like to deposit into")
 
 	"""
 		Withdraw money from specific accounts or containers based on user input
 	"""
 	def withdraw(self):
-		self.inputVal("withdraw", f"Which account would you like to withrdaw from?\n{self.printContainers()}\n(It is advised to only withdraw from accounts directly, but you can withdraw from containers as well.)\n", "How much would you like to withdraw from")
+		self.transaction("withdraw", f"Which account would you like to withrdaw from?\n{self.printContainers()}\n(It is advised to only withdraw from accounts directly, but you can withdraw from containers as well.)\n", "How much would you like to withdraw from")
 
 	"""
 		Create an account or container manually via user input.
@@ -430,24 +476,35 @@ class ControllerInstance:
 		Allows the user to choose an account from all the possible account options.
 		If the user's choice isn't valid, then user is prompted to choose another account option.
 	"""
-	def chooseAccount(self, questionString) -> tuple[any, str]: 
+	def chooseAccount(self, questionString, returnDict : bool = False) -> dict[any, str]: 
 		#asks the user the prompting question, and then also displays all valid account options and lowercases the user's answer.
 		chosenAccount = input(f"{questionString}\n{self.printContainers()}\n")
 
 		#detects if the user's choice was valid, and if it was, it returns the type of the item, and the name of the item chosen.
 		if self.acctList.itemInList(chosenAccount):
-			return Account, chosenAccount
+			returnInfo = {"itemType" : Account, "itemName" : chosenAccount}
 		elif self.contList.itemInList(chosenAccount):
-			return Container, chosenAccount
+			returnInfo = {"itemType" : Container, "itemName" : chosenAccount}
 		else:
 			os.system("cls")
 			#if the choice wasn't valid, the user is told so, and then prompted to choose again.
 			print(f"{chosenAccount} isn't a valid option, please choose again.\n\n")
-			return self.chooseAccount(questionString)
+			return self.chooseAccount(questionString, returnDict)
+		
+		#only returns as a dictionary if the dev wants it too.
+		if not returnDict:
+			return returnInfo.values()
+		else:
+			return returnInfo
 	
 	"""
 		asks the user a question, along with a list of possible answer options. 
 		Then if the user says something that isn't an option, the question is asked again, otherwise, the user's answer is returned.
+
+		Int or Float answerOptions:
+			[str : operation, int/float : comparisonValue]
+			[[str : operation, int/float : comparisonValue], [etc.]]
+			No settings defaults to no comparison, and only checks if the value is a valid input for the selected answer type.
 	"""
 	def question(self, questionStr : str, answerType : any, answerOptions : list = [], clearScreen : bool = False) -> any:
 		if clearScreen:
@@ -455,17 +512,37 @@ class ControllerInstance:
 
 		command = input(questionStr)
 
-		def fail(qStr, aType, aOptions):
-			print(f"{command} is not a valid option.\n\n")
-			return self.question(qStr, aType, aOptions, clearScreen)
+		def fail(qStr, aType, aOptions, failMsg : str = f"{command} is not a valid option.\n\n"):
+			os.system("cls")
+			print(failMsg)
+			return self.question(qStr, aType, aOptions)
 
 		try:
 			if answerType == str:
 				return str(command)
-			elif answerType == int:
-				return int(command)
-			elif answerType == float:
-				return float(command)
+			elif answerType == int or answerType == float:
+				#if there's settings
+				if len(answerOptions) > 0:
+					try:
+						#mutiple settings
+						if type(answerOptions[0]) == list:
+							#loops through all answer options and if none of them make you fail, then command is returned.
+							for case in answerOptions:
+								if not eval(f"{command} {case[0]} {case[1]}"):
+									return fail(questionStr, answerType, answerOptions, f"{command} should be {case[0]} than {case[1]}.\n\n")
+							return answerType(command)
+						#single setting
+						else:
+							#evaluates the single setting case to see if a value is returned or not.
+							if eval(f"{command} {answerOptions[0]} {answerOptions[1]}"):
+								return answerType(command)
+							else:
+								return fail(questionStr, answerType, answerOptions, f"{command} should be {answerOptions[0]} than {answerOptions[1]}.\n\n")
+					except:
+						raise TypeError(f"{answerOptions[0]} is not a valid operation.")
+				else:
+					#no settings
+					return int(command)
 			elif answerType == list:
 				for i in range(len(answerOptions)):
 					answerOptions[i] = str.lower(answerOptions[i])
@@ -848,7 +925,7 @@ class ControllerInstance:
 							)
 						
 
-						self.autoInputVal(id, date, name, value, account, notes)
+						self.autoTransaction(id, date, name, value, account, notes)
 					# else:
 						# raise TypeError("Looks like somehow the save/load functions aren't communicating properly given the fact that somehow there isn't a loadState???\nEven though the loadstate is defined as the first line of the save...")
 

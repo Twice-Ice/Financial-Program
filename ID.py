@@ -9,7 +9,7 @@ class SequentialIDGenerator:
 		self.base_symbols = base_symbols
 		self.base = len(base_symbols)
 
-	def generate_id(self, number):
+	def generateID(self, number):
 		if number == 0:
 			return self.base_symbols[0]
 
@@ -24,7 +24,7 @@ class IDGenerator(SequentialIDGenerator):
 	def __init__(self):
 		super().__init__(ID_COMPRESSOR_SYMBOLS)
 	
-	def generate_id(self):
+	def generateID(self):
 		"""
 		YY = (20)24
 		EP = Epoch
@@ -37,4 +37,4 @@ class IDGenerator(SequentialIDGenerator):
 		MS is limited to the last 2 digits bcs honestly who tf is gonna be inputing new deposits within even the same second???
 		"""
 		number = int(dt.now().strftime("%y") + str(calendar.timegm(dt.now().timetuple()))[-6:] + dt.now().strftime("%f")[-2:])
-		return super().generate_id(number)
+		return super().generateID(number)
