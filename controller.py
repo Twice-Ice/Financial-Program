@@ -44,7 +44,7 @@ class ControllerInstance:
 			case "create":#
 				self.create()
 			case "display":#
-				self.display()
+				self.manualDisplay()
 			case "breakpoint":#
 				self.breakpoint()
 			case "val":#
@@ -63,6 +63,8 @@ class ControllerInstance:
 			case "bal":
 				os.system("cls")
 				print(f"The sum Balance of all accounts is: {self.getBal(gb.COM_INSTANCE)}")
+			case "view":
+				self.view()
 			case _:
 				print(f"{command} is not a valid option! Type help to see all available commands.")
 
@@ -747,49 +749,60 @@ class ControllerInstance:
 		return f"{divLineStr}|"
 
 	"""
+		questions the user on how many isntances they would like to display. (default is 10)
+	"""
+	def instanceQuestion(self, questionStr : str = "How many instances back would you like to see?"):
+		command = input(f"{questionStr}\n(\"All\" for all instances, [ENTER] for the last 10, or any number greater than 0.)\n")
+		if command.lower() == "all":
+			return 0
+		elif command == "":
+			return 10
+		else:
+			try:
+				instances = int(command)
+				if instances <= 0:
+					os.system("cls")
+					print(f"{command} isn't a valid value to be chosen. Please choose a value greater than 0.\n")
+					return self.instanceQuestion()
+				else:
+					return instances
+			except:
+				os.system("cls")
+				print(f"{command} isn't a valid option.\n")
+				return self.instanceQuestion()
+
+	"""
+		When the user is manually defining what account and how many instances they are displaying.
+	"""
+	def manualDisplay(self):
+		accountInfo = self.chooseAccount("What account would you like to view?")
+		displayedInstances = self.instanceQuestion()
+
+		self.display(accountInfo, displayedInstances)
+
+	"""
 		Displays the date, value, account deposited into, and data for where the money went/left from.
 	"""
-	def display(self):
+	def display(self, accountInfo : any = None, displayedInstances : int = 10, limitData : bool = True):
+		os.system("cls")
 		itemList = ["ID", "Date", "Name", "Input", "Output", "Account", "Balance"]
 		baseItemListLen = len(itemList)
 
-		#gets the account that the user would like to choose
-		itemType, chosenAccount = self.chooseAccount("What account would you like to view?")
-		# self.question("Would you like to view another account? (y/n)", ["y", "n"], clearStart = True)
+		if accountInfo != None:
+			itemType, chosenAccount = accountInfo
+			print(f"DISPLAYING: {chosenAccount}\n\n")
+			# self.question("Would you like to view another account? (y/n)", ["y", "n"], clearStart = True)
 
-		#adds the chosen account to the printList, including all accounts within the chosen item if it's a container.
-		if itemType == Account:
-			itemList.append(self.acctList.list[self.acctList.indexItem(chosenAccount)].name)
-		elif itemType == Container:
-			#adds the container itself
-			itemList.append(self.contList.list[self.contList.indexItem(chosenAccount)].name)
-			chosenContainer = self.contList.list[self.contList.indexItem(chosenAccount)]
-			#adds all items stored within the chosen container
-			for i in range(len(chosenContainer.itemList)):
-				itemList.append(chosenContainer.itemList[i][0])
-
-		os.system("cls")
-		#questions the user on how many isntances they would like to display. (default is 10)
-		def instanceQuestion():
-			command = input("How many instances back would you like to see?\n(\"All\" for all instances, [ENTER] for the last 10, or any number greater than 0.)\n")
-			if command.lower() == "all":
-				return 0
-			elif command == "":
-				return 10
-			else:
-				try:
-					instances = int(command)
-					if instances <= 0:
-						os.system("cls")
-						print(f"{command} isn't a valid value to be chosen. Please choose a value greater than 0.\n")
-						return instanceQuestion()
-					else:
-						return instances
-				except:
-					os.system("cls")
-					print(f"{command} isn't a valid option.\n")
-					return instanceQuestion()
-		displayedInstances = instanceQuestion()
+			#adds the chosen account to the printList, including all accounts within the chosen item if it's a container.
+			if itemType == Account:
+				itemList.append(self.acctList.list[self.acctList.indexItem(chosenAccount)].name)
+			elif itemType == Container:
+				#adds the container itself
+				itemList.append(self.contList.list[self.contList.indexItem(chosenAccount)].name)
+				chosenContainer = self.contList.list[self.contList.indexItem(chosenAccount)]
+				#adds all items stored within the chosen container
+				for i in range(len(chosenContainer.itemList)):
+					itemList.append(chosenContainer.itemList[i][0])
 
 		#returns the formated list of all relevant information for the instances displayed.
 		def formatHistoryData(limit : bool = True):
@@ -832,7 +845,7 @@ class ControllerInstance:
 						#only in the case that this is the first and therefor relevant item, then it will affect if the instance is printed or not.
 						if j == baseItemListLen:
 							#checks if there has been any change between instances.
-							if value == self.acctList.list[itemIndex].getSum(i-1) and limit:
+							if value == self.acctList.list[itemIndex].getSum(i-1):
 								instanceHadChange = False
 
 					elif itemType == Container:
@@ -859,21 +872,20 @@ class ControllerInstance:
 									SameValues += 1
 
 							#if all of the values are the same same as the length of the itemList of the container, then the instance is removed.
-							if SameValues == len(self.contList.list[itemIndex].itemList) and limit:
+							if SameValues == len(self.contList.list[itemIndex].itemList):
 								instanceHadChange = False
 								# print(f"{transactionID} was removed from the print list.")
 
 					instanceList.append(self.halfRound(value, 2))
 
 				#if there was a change between instances for all items held within the container then you would print it. Otherwise not.
-				if instanceHadChange:
+				if instanceHadChange or limit == False:
 					printList.append(instanceList)
 
 			return printList
 
-		os.system("cls")
 		#defines every input interaction case for all accounts with printList
-		printList = formatHistoryData()
+		printList = formatHistoryData(limitData)
 		completePrintList = formatHistoryData(False)
 
 		#Determines the maximum size of each column in the itemList. This is then used later for spacing each item properly.
@@ -893,7 +905,6 @@ class ControllerInstance:
 				columnSize[i] = size
 
 
-		print(f"DISPLAYING: {chosenAccount}\n\n")
 
 		#prints the name of each item being printed and then a dividing line
 		namesStr = ""
@@ -927,6 +938,19 @@ class ControllerInstance:
 		for i in range(len(completePrintList[len(completePrintList[len(completePrintList) - 1])])):
 			lineStr += f"| {self.alignText(str(completePrintList[len(completePrintList) - 1][i]), columnSize[i])} "
 		print(f"{lineStr}|")
+
+	# View Data Functions
+	def view(self):
+		command = self.question("What would you like to view?\n[Value, Balance, Notes]", list, ["Value", "Balance", "Notes"])
+
+		match command:
+			case "value":
+				pass
+			case "balance":
+				pass
+			case "notes":
+				displayedInstances = self.instanceQuestion("How many instances would you like to choose from?")
+				self.display(displayedInstances = displayedInstances, limitData = False)
 
 	# Dev Functions
 	"""
@@ -966,3 +990,5 @@ class ControllerInstance:
 
 	def removeTransaction(self):
 		print("What instance would you like to delete?")
+
+# END LINE
