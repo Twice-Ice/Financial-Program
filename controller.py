@@ -45,9 +45,9 @@ class ControllerInstance:
 				self.create()
 			case "display":#
 				self.display()
-			case "breakpoint":##
+			case "breakpoint":#
 				self.breakpoint()
-			case "val":##
+			case "val":#
 				self.val()
 			case "edit":
 				pass
@@ -68,27 +68,308 @@ class ControllerInstance:
 
 
 
+# Misc Help Functions
+
+	# Misc
 	"""
-		Prints all containers and accounts stored within the current instance of the application.
-
-		Containers: cont1, cont2, etc.
-		Accounts: acct1, acct2, etc.
+		Allows the user to choose an account from all the possible account options.
+		If the user's choice isn't valid, then user is prompted to choose another account option.
 	"""
-	def printContainers(self):
-		totalStr = ""
-		#prints each container as one line, and then the next line as each account with commas in between each instance.
-		contStr = ""
-		for container in self.contList.list:
-			contStr += (f"{container.name}, ")
-		totalStr += f"Containers: {contStr[:len(contStr)-2]}\n"
+	def chooseAccount(self, questionString, returnDict : bool = False) -> dict[any, str]: 
+		#asks the user the prompting question, and then also displays all valid account options and lowercases the user's answer.
+		chosenAccount = input(f"{questionString}\n{self.printContainers()}\n")
 
-		acctStr = ""
-		for account in self.acctList.list:
-			acctStr += (f"{account.name}, ")
-		totalStr += f"Accounts: {acctStr[:len(acctStr)-2]}" # cuts off the end ", "
+		#detects if the user's choice was valid, and if it was, it returns the type of the item, and the name of the item chosen.
+		if self.acctList.itemInList(chosenAccount):
+			returnInfo = {"itemType" : Account, "itemName" : chosenAccount}
+		elif self.contList.itemInList(chosenAccount):
+			returnInfo = {"itemType" : Container, "itemName" : chosenAccount}
+		else:
+			os.system("cls")
+			#if the choice wasn't valid, the user is told so, and then prompted to choose again.
+			print(f"{chosenAccount} isn't a valid option, please choose again.\n\n")
+			return self.chooseAccount(questionString, returnDict)
+		
+		#only returns as a dictionary if the dev wants it too.
+		if not returnDict:
+			return returnInfo.values()
+		else:
+			return returnInfo
 
-		return totalStr
+	"""
+		gets all relavant item info and returns it.
+		returns itemType, itemIndex.
+	"""
+	def getItemInfo(self, item) -> tuple[any, int]:
+		if self.contList.itemInList(item):
+			return Container, self.contList.indexItem(item)
+		elif self.acctList.itemInList(item):
+			return Account, self.acctList.indexItem(item)
+		else:
+			raise NameError(f"{item} is not a valid item option")
 
+	"""
+		A half round function with n_digits after the decimal being able to be the last digit.
+
+		copy and pasted from codequest notes bcs I'm lazy :)
+	"""
+	def halfRound(self, val:float, n_digits:int = 0):
+		val *= 10**n_digits
+		result = int(val + (0.50002 if val >= 0 else -0.50002))
+		return result / 10**n_digits
+
+	# Addaptive Question Functions
+	"""
+		Prompts the user with a yes or no question. The user can always press enter to just use the default option.
+	"""
+	def yesNo(self, questionStr, clearScreen : bool = True, default : bool = True):
+		if clearScreen:
+			os.system("cls")
+		command = input(questionStr)
+		try:
+			command = command.lower()
+			match command:
+				case "y":
+					return True
+				case "n":
+					return False
+				case "":
+					return default
+				case _:
+					return self.yesNo(f"{command} is not a valid option, please try again.\n\n{questionStr}")
+		except:
+			return self.yesNo(f"{command} is not a valid option, please try again.\n\n{questionStr}")
+
+	"""
+		asks the user a question, along with a list of possible answer options. 
+		Then if the user says something that isn't an option, the question is asked again, otherwise, the user's answer is returned.
+
+		Int or Float answerOptions:
+			[str : operation, int/float : comparisonValue]
+			[[str : operation, int/float : comparisonValue], [etc.]]
+			No settings defaults to no comparison, and only checks if the value is a valid input for the selected answer type.
+	"""
+	def question(self, questionStr : str, answerType : any, answerOptions : list = [], clearScreen : bool = False) -> any:
+		if clearScreen:
+			os.system("cls")
+
+		command = input(questionStr)
+
+		def fail(qStr, aType, aOptions, failMsg : str = f"{command} is not a valid option.\n\n"):
+			os.system("cls")
+			print(failMsg)
+			return self.question(qStr, aType, aOptions)
+
+		try:
+			if answerType == str:
+				return str(command)
+			elif answerType == int or answerType == float:
+				#if there's settings
+				if len(answerOptions) > 0:
+					try:
+						#mutiple settings
+						if type(answerOptions[0]) == list:
+							#loops through all answer options and if none of them make you fail, then command is returned.
+							for case in answerOptions:
+								if not eval(f"{command} {case[0]} {case[1]}"):
+									return fail(questionStr, answerType, answerOptions, f"{command} should be {case[0]} than {case[1]}.\n\n")
+							return answerType(command)
+						#single setting
+						else:
+							#evaluates the single setting case to see if a value is returned or not.
+							if eval(f"{command} {answerOptions[0]} {answerOptions[1]}"):
+								return answerType(command)
+							else:
+								return fail(questionStr, answerType, answerOptions, f"{command} should be {answerOptions[0]} than {answerOptions[1]}.\n\n")
+					except:
+						raise TypeError(f"{answerOptions[0]} is not a valid operation.")
+				else:
+					#no settings
+					return answerType(command)
+			elif answerType == list:
+				for i in range(len(answerOptions)):
+					answerOptions[i] = str.lower(answerOptions[i])
+				
+				if command.lower() in answerOptions:
+					return command.lower()
+				
+			#if the function gets to this point then it's because none of the options chosen were valid so therefor the option was invalid.
+			return fail(questionStr, answerType, answerOptions)
+		except:
+			return fail(questionStr, answerType, answerOptions)
+
+
+# Save and Load Functions
+
+	# Save
+	"""
+		Saves the session data to the default file, only prompting the user to choose where to save if a default file hasn't been previously chosen already.
+	"""
+	def save(self, saveAnimation : bool = False):
+		saveData = ""
+		
+		#Items section identifier
+		saveData += "ITEMS\n"
+
+		#accounts
+		for i in range(len(self.acctList.list)):
+			saveData += f"Account, {self.acctList.list[i].name}\n"
+		#containers
+		for i in range(len(self.contList.list)):
+			itemListStr = ""
+			#container's item list
+			for j in range(len(self.contList.list[i].itemList)):
+				itemListStr += f"{self.contList.list[i].itemList[j][0]}; {self.contList.list[i].itemList[j][1]}"
+				if j < len(self.contList.list[i].itemList) - 1:
+					itemListStr += ", "
+			#end result
+			saveData += f"Container, {self.contList.list[i].name}, {itemListStr}\n"
+
+		#Transactions section identifier
+		saveData += "TRANSACTIONS\n"
+
+
+		#loops through all transactions
+		for i in range(len(self.history)):
+			#and adds to saveData, the history instance's information. 
+			instance = self.history[i]
+			lineStr = ""
+			for j in range(len(instance)):
+				#how to handle instances where the item within the history instance is a datetime object as to avoid cases where the program crashes bcs oh no datetime to str doesn't exist DDDD:
+				item = str(instance[j]) if type(instance[j]) != datetime else instance[j].strftime("%m/%d/%y %H:%M:%S:%f")
+				lineStr += item
+				if j < len(instance) - 1:
+					lineStr += ", "
+			#adds the instance's information, separated by a new line.
+			saveData += f"{lineStr}\n"
+			#shows a percentage for how much of the file is saved.
+			os.system("cls")
+			if saveAnimation:
+				print(f"{self.halfRound(((i+1)/len(self.history))*100, 1)} %")
+
+		#properly saves the data and prompts the user to press enter in order to get out of the save menu.
+		self.file.save(saveData)
+		if saveAnimation:
+			print("Saved!\n")
+
+	# Load
+	"""
+		Loads a file and generates item entries based on what the file contains.
+
+		Files contain "ITEMS" sections and "TRANSACTIONS" sections which determine how to handle the data. 
+	"""
+	def load(self):
+		#resets history and all item lists.
+		self.history = []
+		self.acctList = ItemList()
+		self.contList = ItemList()
+
+		#opens the file based on the location stored within meta.txt
+		with open(self.file.filePath) as file:
+			loadState = ""
+			for line in file:
+				#defines the loadStat and how to handle the data presented in the system.
+				if line.strip() == "ITEMS" or line.strip() == "TRANSACTIONS":
+					loadState = line.strip()
+				else:
+					#splits up the line's data and stores it for later use.
+					line = line[0:-1].split(", ")
+					if loadState == "ITEMS":
+						itemType = line[0]
+						name = line[1]
+						if itemType == "Account":
+							#accounts are simple and don't require much more than the name of the account.
+							self.autoCreate(itemType, name)
+						elif itemType == "Container":
+							itemList = []
+							#loops through all remaining data in the line and splits up the data into interpretable information for the auto create (container) function.
+							for i in range(2, len(line)):
+								itemCase = line[i].split("; ")
+								itemName = itemCase[0]
+								itemPercent = float(itemCase[1])
+								itemList.append([itemName, itemPercent])
+
+							self.autoCreate(itemType, name, itemList)
+					elif loadState == "TRANSACTIONS":
+						id = line[0]
+						#data for transactions is split up by commas and those are split earlier in this function before this data is handled.
+						date = line[1]
+						name = line[2]
+						value = float(line[3])
+						account = line[4]
+						if len(line) > 5:
+							notes = line[5]
+							if len(line) > 6:
+								for i in range(6, len(line)):
+									notes += f", {line[i]}"
+						else:
+							notes = ""
+							if account[len(account)-1:len(account)] == ",":
+								account = account[:len(account)-1]
+
+						#to interpret datetime information, due to the formating putting the numbers all in the exact same location, the data is interpreted by just getting the exact location of the values.
+						date = datetime(
+							month = int(date[0:2]),
+							day = int(date[3:5]),
+							year = int(date[6:8]) + 2000, #stored as a digit 0-99 so 2000 is added so that datetime doesn't just go "oh it's 24" and instead goes "oh it's 2024".
+							hour = int(date[9:11]),
+							minute = int(date[12:14]),
+							second = int(date[15:17]),
+							microsecond = int(date[18:len(date)])
+							)
+						
+
+						self.autoTransaction(id, date, name, value, account, notes)
+					# else:
+						# raise TypeError("Looks like somehow the save/load functions aren't communicating properly given the fact that somehow there isn't a loadState???\nEven though the loadstate is defined as the first line of the save...")
+
+	# Auto Functions
+	"""
+		Pass all information required to make an account automatically and directly from the code.
+
+		accountContainer = account/container
+		name = name of created item
+		itemList = list of percentages and accounts in the case that a container is created.
+	"""
+	def autoCreate(self, accountContainer : str = "account", name : str = "___", itemList : list = []):
+		match str.lower(accountContainer):
+			case "account":
+				self.acctList.newItem(Account(name, len(self.history)))
+			case "container":
+				container = Container(name)
+				container.itemList = itemList
+				self.contList.newItem(container)
+			case _:
+				raise TypeError(f"{accountContainer} isn't an option bruh")
+
+	"""
+		automatically handle transactions such as deposits or withdrawals within this function. It handles almost exactly like inputVal, just without user prompts.
+	"""
+	def autoTransaction(self, id, datetime, name, value, accountName, notes, incrementComInstance : bool = True):
+		self.history.append([id, datetime, name, value, accountName, notes])
+
+		if self.contList.itemInList(accountName):
+			index = self.contList.indexItem(accountName)
+			for i in range(len(self.contList.list)):
+				if i == index:
+					self.acctList, self.contList = self.contList.list[self.contList.indexItem(accountName)].addVal(value, self.acctList, self.contList)
+				else:
+					self.acctList, self.contList = self.contList.list[i].addVal(0, self.acctList, self.contList)					
+		elif self.acctList.itemInList(accountName):
+			index = self.acctList.indexItem(accountName)
+			for i in range(len(self.acctList.list)):
+				if i == index:
+					self.acctList.list[index].addVal(value)
+				else:
+					self.acctList.list[i].addVal(0)
+
+		#gotta do this, not before the other stuff though bcs it will be delayed by one COM_INSTANCE rather than applying after and it's proper.
+		if incrementComInstance:
+			gb.COM_INSTANCE += 1
+
+# User Command Functions
+
+	# Help
 	"""
 		prints all options that can use chosen by the user when interacting with the application.
 	"""
@@ -149,74 +430,7 @@ class ControllerInstance:
 					return specifics()
 		specifics(clearScreen = True)
 
-	"""
-		automatically handle transactions such as deposits or withdrawals within this function. It handles almost exactly like inputVal, just without user prompts.
-	"""
-	def autoTransaction(self, id, datetime, name, value, accountName, notes, incrementComInstance : bool = True):
-		self.history.append([id, datetime, name, value, accountName, notes])
-
-		if self.contList.itemInList(accountName):
-			index = self.contList.indexItem(accountName)
-			for i in range(len(self.contList.list)):
-				if i == index:
-					self.acctList, self.contList = self.contList.list[self.contList.indexItem(accountName)].addVal(value, self.acctList, self.contList)
-				else:
-					self.acctList, self.contList = self.contList.list[i].addVal(0, self.acctList, self.contList)					
-		elif self.acctList.itemInList(accountName):
-			index = self.acctList.indexItem(accountName)
-			for i in range(len(self.acctList.list)):
-				if i == index:
-					self.acctList.list[index].addVal(value)
-				else:
-					self.acctList.list[i].addVal(0)
-
-		#gotta do this, not before the other stuff though bcs it will be delayed by one COM_INSTANCE rather than applying after and it's proper.
-		if incrementComInstance:
-			gb.COM_INSTANCE += 1
-
-	"""
-		Transfers a value from one account to the other.
-
-		Does not save as a "transfer" but instead just saves as two transactions.
-	"""
-	def transfer(self):
-		#prompting questions
-		os.system("cls")
-		fromAccount = self.chooseAccount("What account would you like to transfer from?", returnDict = True)
-		os.system("cls")
-		toAccount = self.chooseAccount(f"Transfering from {fromAccount["itemName"]}\n\nWhat account would you like to transfer to?", returnDict = True)
-		value = self.question(f"Transfering from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nHow much would you like to transfer?\n", float, [">=", 0], clearScreen = True)
-		transferName = self.question(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nWhat would you like to call this transaction?\n", str, clearScreen = True)
-		notes = self.question(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nAre there any notes for this Transfer?", str, clearScreen = True)
-		doDate = self.yesNo(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nWould you like to set a specific date?\n[y/n]\n", default = False)
-		#manually setting the date
-		match doDate:
-			case True:
-				#code copied from self.inputVal()
-				os.system("cls")
-				properlyFormated = False
-				while properlyFormated == False:
-					print(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n")
-					dateData = input("Please format as follows:\nMM/DD/YYYY\n")
-					try:
-						dateData = dateData.split("/")
-						date = datetime(int(dateData[2]), int(dateData[0]), int(dateData[1]))
-						properlyFormated = True
-					except:
-						os.system("cls")
-						print(f"{dateData} was not properly formated.")
-			case False:
-				date = datetime.now()
-
-		transferID = self.IDGen.generateID()
-		#automatically generates these two transactions
-		self.autoTransaction(transferID, date, f"TFR : {transferName}", -value, fromAccount["itemName"], f"${value} transfer to {toAccount["itemName"]}, {notes}")
-		self.autoTransaction(transferID, date, f"TFR : {transferName}", value, toAccount["itemName"], f"${value} Transfer from {fromAccount["itemName"]}, {notes}")
-
-		#saves the datae
-		print("Transfered Successfully!")
-		self.save()
-
+	# Transaction Functions
 	"""
 		A combined way of handling deposits and withdrawals by prompting the user with questions such as q1 and q2.
 	"""
@@ -285,17 +499,61 @@ class ControllerInstance:
 		self.save()
 
 	"""
+		Withdraw money from specific accounts or containers based on user input
+	"""
+	def withdraw(self):
+		self.transaction("withdraw", f"Which account would you like to withrdaw from?\n{self.printContainers()}\n(It is advised to only withdraw from accounts directly, but you can withdraw from containers as well.)\n", "How much would you like to withdraw from")
+
+	"""
 		Deposit money into specific accounts or containers based on user input
 	"""
 	def deposit(self): 
 		self.transaction("deposit", f"Which account would you like to deposit into?\n{self.printContainers()}\n", "How much would you like to deposit into")
 
 	"""
-		Withdraw money from specific accounts or containers based on user input
-	"""
-	def withdraw(self):
-		self.transaction("withdraw", f"Which account would you like to withrdaw from?\n{self.printContainers()}\n(It is advised to only withdraw from accounts directly, but you can withdraw from containers as well.)\n", "How much would you like to withdraw from")
+		Transfers a value from one account to the other.
 
+		Does not save as a "transfer" but instead just saves as two transactions.
+	"""
+	def transfer(self):
+		#prompting questions
+		os.system("cls")
+		fromAccount = self.chooseAccount("What account would you like to transfer from?", returnDict = True)
+		os.system("cls")
+		toAccount = self.chooseAccount(f"Transfering from {fromAccount["itemName"]}\n\nWhat account would you like to transfer to?", returnDict = True)
+		value = self.question(f"Transfering from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nHow much would you like to transfer?\n", float, [">=", 0], clearScreen = True)
+		transferName = self.question(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nWhat would you like to call this transaction?\n", str, clearScreen = True)
+		notes = self.question(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nAre there any notes for this Transfer?", str, clearScreen = True)
+		doDate = self.yesNo(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nWould you like to set a specific date?\n[y/n]\n", default = False)
+		#manually setting the date
+		match doDate:
+			case True:
+				#code copied from self.inputVal()
+				os.system("cls")
+				properlyFormated = False
+				while properlyFormated == False:
+					print(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n")
+					dateData = input("Please format as follows:\nMM/DD/YYYY\n")
+					try:
+						dateData = dateData.split("/")
+						date = datetime(int(dateData[2]), int(dateData[0]), int(dateData[1]))
+						properlyFormated = True
+					except:
+						os.system("cls")
+						print(f"{dateData} was not properly formated.")
+			case False:
+				date = datetime.now()
+
+		transferID = self.IDGen.generateID()
+		#automatically generates these two transactions
+		self.autoTransaction(transferID, date, f"TFR : {transferName}", -value, fromAccount["itemName"], f"${value} transfer to {toAccount["itemName"]}, {notes}")
+		self.autoTransaction(transferID, date, f"TFR : {transferName}", value, toAccount["itemName"], f"${value} Transfer from {fromAccount["itemName"]}, {notes}")
+
+		#saves the data
+		print("Transfered Successfully!")
+		self.save()
+
+	# Functions that Create Items (or help create items)
 	"""
 		Create an account or container manually via user input.
 	"""
@@ -315,45 +573,6 @@ class ControllerInstance:
 				self.save()
 			case _:
 				print(f"I'm sorry, {command} is not an option.")
-
-	"""
-		Pass all information required to make an account automatically and directly from the code.
-
-		accountContainer = account/container
-		name = name of created item
-		itemList = list of percentages and accounts in the case that a container is created.
-	"""
-	def autoCreate(self, accountContainer : str = "account", name : str = "___", itemList : list = []):
-		match str.lower(accountContainer):
-			case "account":
-				self.acctList.newItem(Account(name, len(self.history)))
-			case "container":
-				container = Container(name)
-				container.itemList = itemList
-				self.contList.newItem(container)
-			case _:
-				raise TypeError(f"{accountContainer} isn't an option bruh")
-
-	"""
-		Prompts the user with a yes or no question. The user can always press enter to just use the default option.
-	"""
-	def yesNo(self, questionStr, clearScreen : bool = True, default : bool = True):
-		if clearScreen:
-			os.system("cls")
-		command = input(questionStr)
-		try:
-			command = command.lower()
-			match command:
-				case "y":
-					return True
-				case "n":
-					return False
-				case "":
-					return default
-				case _:
-					return self.yesNo(f"{command} is not a valid option, please try again.\n\n{questionStr}")
-		except:
-			return self.yesNo(f"{command} is not a valid option, please try again.\n\n{questionStr}")
 
 	"""
 		Define the percentages and accounts that a container contributes to.
@@ -472,101 +691,29 @@ class ControllerInstance:
 		#sets the container's itemList as the list returned from the percentages List.
 		container.itemList = definePercentagesList()
 
-	"""
-		Allows the user to choose an account from all the possible account options.
-		If the user's choice isn't valid, then user is prompted to choose another account option.
-	"""
-	def chooseAccount(self, questionString, returnDict : bool = False) -> dict[any, str]: 
-		#asks the user the prompting question, and then also displays all valid account options and lowercases the user's answer.
-		chosenAccount = input(f"{questionString}\n{self.printContainers()}\n")
-
-		#detects if the user's choice was valid, and if it was, it returns the type of the item, and the name of the item chosen.
-		if self.acctList.itemInList(chosenAccount):
-			returnInfo = {"itemType" : Account, "itemName" : chosenAccount}
-		elif self.contList.itemInList(chosenAccount):
-			returnInfo = {"itemType" : Container, "itemName" : chosenAccount}
-		else:
-			os.system("cls")
-			#if the choice wasn't valid, the user is told so, and then prompted to choose again.
-			print(f"{chosenAccount} isn't a valid option, please choose again.\n\n")
-			return self.chooseAccount(questionString, returnDict)
-		
-		#only returns as a dictionary if the dev wants it too.
-		if not returnDict:
-			return returnInfo.values()
-		else:
-			return returnInfo
-	
-	"""
-		asks the user a question, along with a list of possible answer options. 
-		Then if the user says something that isn't an option, the question is asked again, otherwise, the user's answer is returned.
-
-		Int or Float answerOptions:
-			[str : operation, int/float : comparisonValue]
-			[[str : operation, int/float : comparisonValue], [etc.]]
-			No settings defaults to no comparison, and only checks if the value is a valid input for the selected answer type.
-	"""
-	def question(self, questionStr : str, answerType : any, answerOptions : list = [], clearScreen : bool = False) -> any:
-		if clearScreen:
-			os.system("cls")
-
-		command = input(questionStr)
-
-		def fail(qStr, aType, aOptions, failMsg : str = f"{command} is not a valid option.\n\n"):
-			os.system("cls")
-			print(failMsg)
-			return self.question(qStr, aType, aOptions)
-
-		try:
-			if answerType == str:
-				return str(command)
-			elif answerType == int or answerType == float:
-				#if there's settings
-				if len(answerOptions) > 0:
-					try:
-						#mutiple settings
-						if type(answerOptions[0]) == list:
-							#loops through all answer options and if none of them make you fail, then command is returned.
-							for case in answerOptions:
-								if not eval(f"{command} {case[0]} {case[1]}"):
-									return fail(questionStr, answerType, answerOptions, f"{command} should be {case[0]} than {case[1]}.\n\n")
-							return answerType(command)
-						#single setting
-						else:
-							#evaluates the single setting case to see if a value is returned or not.
-							if eval(f"{command} {answerOptions[0]} {answerOptions[1]}"):
-								return answerType(command)
-							else:
-								return fail(questionStr, answerType, answerOptions, f"{command} should be {answerOptions[0]} than {answerOptions[1]}.\n\n")
-					except:
-						raise TypeError(f"{answerOptions[0]} is not a valid operation.")
-				else:
-					#no settings
-					return int(command)
-			elif answerType == list:
-				for i in range(len(answerOptions)):
-					answerOptions[i] = str.lower(answerOptions[i])
-				
-				if command.lower() in answerOptions:
-					return command.lower()
-				
-			#if the function gets to this point then it's because none of the options chosen were valid so therefor the option was invalid.
-			return fail(questionStr, answerType, answerOptions)
-		except:
-			return fail(questionStr, answerType, answerOptions)
+	# Display Functions
 
 	"""
-		gets all relavant item info and returns it.
-		returns itemType, itemIndex.
+		Prints all containers and accounts stored within the current instance of the application.
+
+		Containers: cont1, cont2, etc.
+		Accounts: acct1, acct2, etc.
 	"""
-	def getItemInfo(self, item) -> tuple[any, int]:
-		if self.contList.itemInList(item):
-			return Container, self.contList.indexItem(item)
-		elif self.acctList.itemInList(item):
-			return Account, self.acctList.indexItem(item)
-		else:
-			raise NameError(f"{item} is not a valid item option")	
-	
+	def printContainers(self):
+		totalStr = ""
+		#prints each container as one line, and then the next line as each account with commas in between each instance.
+		contStr = ""
+		for container in self.contList.list:
+			contStr += (f"{container.name}, ")
+		totalStr += f"Containers: {contStr[:len(contStr)-2]}\n"
+
+		acctStr = ""
+		for account in self.acctList.list:
+			acctStr += (f"{account.name}, ")
+		totalStr += f"Accounts: {acctStr[:len(acctStr)-2]}" # cuts off the end ", "
+
+		return totalStr
+
 	"""
 		Properly spaces out items based on the size inputed so that inputedString is centered between to (semi)equal whitespaces.
 
@@ -781,21 +928,12 @@ class ControllerInstance:
 			lineStr += f"| {self.alignText(str(completePrintList[len(completePrintList) - 1][i]), columnSize[i])} "
 		print(f"{lineStr}|")
 
+	# Dev Functions
 	"""
 		A function to call so that I can activate a breakpoint
 	"""
 	def breakpoint(self):
 		print()
-
-	"""
-		A half round function with n_digits after the decimal being able to be the last digit.
-
-		copy and pasted from codequest notes bcs I'm lazy :)
-	"""
-	def halfRound(self, val:float, n_digits:int = 0):
-		val *= 10**n_digits
-		result = int(val + (0.50002 if val >= 0 else -0.50002))
-		return result / 10**n_digits
 
 	"""
 		dev tool, lets me see what the exact value of an account is without using a breakpoint or going inside of the watch.
@@ -810,125 +948,15 @@ class ControllerInstance:
 			self.val()
 
 	"""
-		Saves the session data to the default file, only prompting the user to choose where to save if a default file hasn't been previously chosen already.
+		Returns the balance of the sum of all accounts at instance.
 	"""
-	def save(self, saveAnimation : bool = False):
-		saveData = ""
-		
-		#Items section identifier
-		saveData += "ITEMS\n"
+	def getBal(self, instance):
+		value = 0
+		for account in self.acctList.list:
+			value += account.getSum(instance)
+		return math.floor(value*100)/100
 
-		#accounts
-		for i in range(len(self.acctList.list)):
-			saveData += f"Account, {self.acctList.list[i].name}\n"
-		#containers
-		for i in range(len(self.contList.list)):
-			itemListStr = ""
-			#container's item list
-			for j in range(len(self.contList.list[i].itemList)):
-				itemListStr += f"{self.contList.list[i].itemList[j][0]}; {self.contList.list[i].itemList[j][1]}"
-				if j < len(self.contList.list[i].itemList) - 1:
-					itemListStr += ", "
-			#end result
-			saveData += f"Container, {self.contList.list[i].name}, {itemListStr}\n"
-
-		#Transactions section identifier
-		saveData += "TRANSACTIONS\n"
-
-
-		#loops through all transactions
-		for i in range(len(self.history)):
-			#and adds to saveData, the history instance's information. 
-			instance = self.history[i]
-			lineStr = ""
-			for j in range(len(instance)):
-				#how to handle instances where the item within the history instance is a datetime object as to avoid cases where the program crashes bcs oh no datetime to str doesn't exist DDDD:
-				item = str(instance[j]) if type(instance[j]) != datetime else instance[j].strftime("%m/%d/%y %H:%M:%S:%f")
-				lineStr += item
-				if j < len(instance) - 1:
-					lineStr += ", "
-			#adds the instance's information, separated by a new line.
-			saveData += f"{lineStr}\n"
-			#shows a percentage for how much of the file is saved.
-			os.system("cls")
-			if saveAnimation:
-				print(f"{self.halfRound(((i+1)/len(self.history))*100, 1)} %")
-
-		#properly saves the data and prompts the user to press enter in order to get out of the save menu.
-		self.file.save(saveData)
-		if saveAnimation:
-			print("Saved!\n")
-
-	"""
-		Loads a file and generates item entries based on what the file contains.
-
-		Files contain "ITEMS" sections and "TRANSACTIONS" sections which determine how to handle the data. 
-	"""
-	def load(self):
-		#resets history and all item lists.
-		self.history = []
-		self.acctList = ItemList()
-		self.contList = ItemList()
-
-		#opens the file based on the location stored within meta.txt
-		with open(self.file.filePath) as file:
-			loadState = ""
-			for line in file:
-				#defines the loadStat and how to handle the data presented in the system.
-				if line.strip() == "ITEMS" or line.strip() == "TRANSACTIONS":
-					loadState = line.strip()
-				else:
-					#splits up the line's data and stores it for later use.
-					line = line[0:-1].split(", ")
-					if loadState == "ITEMS":
-						itemType = line[0]
-						name = line[1]
-						if itemType == "Account":
-							#accounts are simple and don't require much more than the name of the account.
-							self.autoCreate(itemType, name)
-						elif itemType == "Container":
-							itemList = []
-							#loops through all remaining data in the line and splits up the data into interpretable information for the auto create (container) function.
-							for i in range(2, len(line)):
-								itemCase = line[i].split("; ")
-								itemName = itemCase[0]
-								itemPercent = float(itemCase[1])
-								itemList.append([itemName, itemPercent])
-
-							self.autoCreate(itemType, name, itemList)
-					elif loadState == "TRANSACTIONS":
-						id = line[0]
-						#data for transactions is split up by commas and those are split earlier in this function before this data is handled.
-						date = line[1]
-						name = line[2]
-						value = float(line[3])
-						account = line[4]
-						if len(line) > 5:
-							notes = line[5]
-							if len(line) > 6:
-								for i in range(6, len(line)):
-									notes += f", {line[i]}"
-						else:
-							notes = ""
-							if account[len(account)-1:len(account)] == ",":
-								account = account[:len(account)-1]
-
-						#to interpret datetime information, due to the formating putting the numbers all in the exact same location, the data is interpreted by just getting the exact location of the values.
-						date = datetime(
-							month = int(date[0:2]),
-							day = int(date[3:5]),
-							year = int(date[6:8]) + 2000, #stored as a digit 0-99 so 2000 is added so that datetime doesn't just go "oh it's 24" and instead goes "oh it's 2024".
-							hour = int(date[9:11]),
-							minute = int(date[12:14]),
-							second = int(date[15:17]),
-							microsecond = int(date[18:len(date)])
-							)
-						
-
-						self.autoTransaction(id, date, name, value, account, notes)
-					# else:
-						# raise TypeError("Looks like somehow the save/load functions aren't communicating properly given the fact that somehow there isn't a loadState???\nEven though the loadstate is defined as the first line of the save...")
-
+	#WIP Functions
 	def remove(self):
 		command = self.question("Would you like to remove a transaction, or an item such as a container/account?", str, ["Transaction", "Deposit", "Withdrawal", "Withdraw", "Item", "Container", "Account"])
 		if command == "Transaction" or command == "Deposit" or command == "Withdrawal" or command == "Withdraw":
@@ -938,14 +966,3 @@ class ControllerInstance:
 
 	def removeTransaction(self):
 		print("What instance would you like to delete?")
-
-	"""
-		Returns the balance of the sum of all accounts at instance.
-	"""
-	def getBal(self, instance):
-		value = 0
-		for account in self.acctList.list:
-			value += account.getSum(instance)
-		return math.floor(value*100)/100
-
-#
