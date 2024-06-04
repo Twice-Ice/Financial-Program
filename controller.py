@@ -120,6 +120,16 @@ class ControllerInstance:
 		result = int(val + (0.50002 if val >= 0 else -0.50002))
 		return result / 10**n_digits
 
+	"""
+		Get a list containing all indices of target from within list.
+	"""
+	def multIndex(self, list : list, target : any) -> list:
+		indices = []
+		for i in range(len(list)):
+			if list[i] == target:
+				indices.append(i)
+		return indices
+
 	# Addaptive Question Functions
 	"""
 		Prompts the user with a yes or no question. The user can always press enter to just use the default option.
@@ -742,7 +752,7 @@ class ControllerInstance:
 	"""
 		Returns a dividing line with the size of len.
 	"""
-	def printDivLine(self, len):
+	def createDivLine(self, len):
 		divLineStr = "|"
 		for i in range(len - 2):
 			divLineStr += "-"
@@ -785,8 +795,9 @@ class ControllerInstance:
 	"""
 	def display(self, accountInfo : any = None, displayedInstances : int = 10, limitData : bool = True):
 		os.system("cls")
-		itemList = ["ID", "Date", "Name", "Input", "Output", "Account", "Balance"]
+		itemList = ["ID", "Date", "Name", "Account" , " ", "Input", "Output", " ", "Balance", " "]
 		baseItemListLen = len(itemList)
+		baseItemList = itemList.copy()
 
 		if accountInfo != None:
 			itemType, chosenAccount = accountInfo
@@ -833,8 +844,29 @@ class ControllerInstance:
 
 				balance = self.getBal(i)
 
-				#Adds all of these stats to the list for later printing
-				instanceList = [transactionID, date, transactionName, inputVal, outputVal, account, balance]
+				#initializes a list for the currentInstance and all data associated with it.
+				instanceList = ["" for i in baseItemList]
+
+				#dict containing all linked data that can be called.
+				keyList = {
+					"ID" : transactionID,
+					"Date" : date,
+					"Name" : transactionName,
+					"Input" : inputVal,
+					"Output" : outputVal,
+					"Account" : account,
+					"Balance" : balance
+				}
+
+				#loops through each item in keyList
+				for item in keyList:
+					#gets all indices that the item is called from within itemlist
+					indices = self.multIndex(itemList, item)
+					#loops through these indices and adds them to the instanceList at their respective positions.
+					for index in indices:
+						instanceList[index] = keyList[item]
+
+				# instanceList = [transactionID, date, transactionName, inputVal, outputVal, account, balance]
 
 				#Defines the item values at each point in the history for every item after the default items in itemList.
 				for j in range(baseItemListLen, len(itemList)):
@@ -905,7 +937,6 @@ class ControllerInstance:
 				columnSize[i] = size
 
 
-
 		#prints the name of each item being printed and then a dividing line
 		namesStr = ""
 		for i in range(len(itemList)):
@@ -913,7 +944,7 @@ class ControllerInstance:
 		lineLen = len(namesStr) + 1
 		namesStr += "|"
 		print(namesStr)
-		print(self.printDivLine(lineLen))
+		print(self.createDivLine(lineLen))
 
 		#prints all item information divided by bars like such: "|  |"
 		for i in range(len(printList) - displayedInstances if displayedInstances > 0 else 0, len(printList)):
@@ -933,7 +964,7 @@ class ControllerInstance:
 			print(f"{lineStr}|")
 		# print(len(printList))
 
-		print(self.printDivLine(lineLen))
+		print(self.createDivLine(lineLen))
 		lineStr = ""
 		for i in range(len(completePrintList[len(completePrintList[len(completePrintList) - 1])])):
 			lineStr += f"| {self.alignText(str(completePrintList[len(completePrintList) - 1][i]), columnSize[i])} "
