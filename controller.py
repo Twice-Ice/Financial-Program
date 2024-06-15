@@ -31,7 +31,7 @@ class ControllerInstance:
 		# self.containerPercentage(fakeItemList)
 
 		command = input("\n\nWhat would you like to do?\n")
-		os.system("cls")
+		self.cls()
 		match str.lower(command):
 			case "help":
 				self.help()
@@ -50,7 +50,7 @@ class ControllerInstance:
 			case "val":#
 				self.val()
 			case "edit":
-				pass
+				self.edit()
 			case "save":#
 				self.save(saveAnimation = True)
 			case "load":#
@@ -61,7 +61,7 @@ class ControllerInstance:
 			case "print":
 				print(self.file.filePath, self.file.metaPath)
 			case "bal":
-				os.system("cls")
+				self.cls()
 				print(f"The sum Balance of all accounts is: {self.getBal(gb.COM_INSTANCE)}")
 			case "view":
 				self.view()
@@ -76,6 +76,8 @@ class ControllerInstance:
 	"""
 		Allows the user to choose an account from all the possible account options.
 		If the user's choice isn't valid, then user is prompted to choose another account option.
+
+		returnDict is used so that the dev can store the itemType and the itemName in seperate indeces inside of a dict.
 	"""
 	def chooseAccount(self, questionString, returnDict : bool = False) -> dict[any, str]: 
 		#asks the user the prompting question, and then also displays all valid account options and lowercases the user's answer.
@@ -87,7 +89,7 @@ class ControllerInstance:
 		elif self.contList.itemInList(chosenAccount):
 			returnInfo = {"itemType" : Container, "itemName" : chosenAccount}
 		else:
-			os.system("cls")
+			self.cls()
 			#if the choice wasn't valid, the user is told so, and then prompted to choose again.
 			print(f"{chosenAccount} isn't a valid option, please choose again.\n\n")
 			return self.chooseAccount(questionString, returnDict)
@@ -130,13 +132,19 @@ class ControllerInstance:
 				indices.append(i)
 		return indices
 
+	"""
+		clears screen
+	"""
+	def cls(self):
+		os.system("cls")
+
 	# Addaptive Question Functions
 	"""
 		Prompts the user with a yes or no question. The user can always press enter to just use the default option.
 	"""
-	def yesNo(self, questionStr, clearScreen : bool = True, default : bool = True):
+	def yesNo(self, questionStr, clearScreen : bool = True, default : bool = True) -> bool:
 		if clearScreen:
-			os.system("cls")
+			self.cls()
 		command = input(questionStr)
 		try:
 			command = command.lower()
@@ -163,12 +171,12 @@ class ControllerInstance:
 	"""
 	def question(self, questionStr : str, answerType : any, answerOptions : list = [], clearScreen : bool = False) -> any:
 		if clearScreen:
-			os.system("cls")
+			self.cls()
 
 		command = input(questionStr)
 
 		def fail(qStr, aType, aOptions, failMsg : str = f"{command} is not a valid option.\n\n"):
-			os.system("cls")
+			self.cls()
 			print(failMsg)
 			return self.question(qStr, aType, aOptions)
 
@@ -198,12 +206,22 @@ class ControllerInstance:
 				else:
 					#no settings
 					return answerType(command)
-			elif answerType == list:
-				for i in range(len(answerOptions)):
-					answerOptions[i] = str.lower(answerOptions[i])
+			elif answerType == list or answerType == dict:
+				#so that dicts can work properly and not have to format before calling self.question(), 
+				#the following code is required to properly return the user's choice.
+				#answerOptionNames stores the raw unformated names, whereas formatedAnswerOptionNames is all lowercase.
+				answerOptionNames = []
+				formatedAnswerOptionNames = []
+				for i in answerOptions:
+					answerOptionNames.append(i)
+					formatedAnswerOptionNames.append(str.lower(i))
 				
-				if command.lower() in answerOptions:
-					return command.lower()
+				if command.lower() in formatedAnswerOptionNames:
+					if answerType == dict:
+						#returns the original format answer version based on the user's command.
+						return answerOptionNames[formatedAnswerOptionNames.index(command.lower())]
+					else:
+						return command.lower()
 				
 			#if the function gets to this point then it's because none of the options chosen were valid so therefor the option was invalid.
 			return fail(questionStr, answerType, answerOptions)
@@ -255,7 +273,7 @@ class ControllerInstance:
 			#adds the instance's information, separated by a new line.
 			saveData += f"{lineStr}\n"
 			#shows a percentage for how much of the file is saved.
-			os.system("cls")
+			self.cls()
 			if saveAnimation:
 				print(f"{self.halfRound(((i+1)/len(self.history))*100, 1)} %")
 
@@ -408,7 +426,7 @@ class ControllerInstance:
 
 		def specifics(clearScreen : bool = False):
 			if clearScreen:
-				os.system("cls")
+				self.cls()
 			print("Here are all possible commands:")
 			for key in keys:
 				print(f"\t{key}")
@@ -422,22 +440,22 @@ class ControllerInstance:
 			try:
 				#the chosen option was valid
 				if command.lower() in lowerKeys:
-					os.system("cls")
+					self.cls()
 					index = lowerKeys.index(command.lower())
 					print(f"{options[keys[index]]}\n")
 					return specifics()
 				#the user wanted to quit the program
 				elif command.lower() == "quit help":
-					os.system("cls")
+					self.cls()
 					return
 				#the user's choice wasn't valid
 				else:
-					os.system("cls")
+					self.cls()
 					print(f"{command} isn't a valid option, you can type \"Quit Help\" to leave the help menu.\n")
 					return specifics()
 			except:
 					#the user's choice wasn't valid and couldn't be .lower()-ed
-					os.system("cls")
+					self.cls()
 					print(f"{command} isn't a valid option, you can type \"Quit Help\" to leave the help menu.\n")
 					return specifics()
 		specifics(clearScreen = True)
@@ -457,7 +475,7 @@ class ControllerInstance:
 					if val >= 0:
 						return val
 					else:
-						os.system("cls")
+						self.cls()
 						print(f"{val} is not a valid option when depositing, make sure when depositing you're only depositing values greater than or equal to 0.")
 						return valInRangeQuestion()
 				elif type == "withdraw":
@@ -471,7 +489,7 @@ class ControllerInstance:
 			notes = self.question("Is there any notes for this transaction?\n[Enter to continue]\n", str, clearScreen = True)
 			doDate = self.question("would you like to set a specific date?\n[y/n]\n", list, ["y", "n", ""], clearScreen = True)
 			if doDate == "y":
-				os.system("cls")
+				self.cls()
 				properlyFormated = False
 				while properlyFormated == False:
 					dateData = input("Please format as follows:\nMM/DD/YYYY\n")
@@ -480,13 +498,13 @@ class ControllerInstance:
 						date = datetime(int(dateData[2]), int(dateData[0]), int(dateData[1]))
 						properlyFormated = True
 					except:
-						os.system("cls")
+						self.cls()
 						print(f"{dateData} was not properly formated.")
 			else:
 				date = datetime.now()
 			self.history.append([self.IDGen.generateID(), date, transactionName, value * typeMult, itemName, notes])
 		else:
-			os.system("cls")
+			self.cls()
 			print(f"{itemName} is not a valid account or container option.")
 			return
 
@@ -529,9 +547,9 @@ class ControllerInstance:
 	"""
 	def transfer(self):
 		#prompting questions
-		os.system("cls")
+		self.cls()
 		fromAccount = self.chooseAccount("What account would you like to transfer from?", returnDict = True)
-		os.system("cls")
+		self.cls()
 		toAccount = self.chooseAccount(f"Transfering from {fromAccount["itemName"]}\n\nWhat account would you like to transfer to?", returnDict = True)
 		value = self.question(f"Transfering from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nHow much would you like to transfer?\n", float, [">=", 0], clearScreen = True)
 		transferName = self.question(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n\nWhat would you like to call this transaction?\n", str, clearScreen = True)
@@ -541,7 +559,7 @@ class ControllerInstance:
 		match doDate:
 			case True:
 				#code copied from self.inputVal()
-				os.system("cls")
+				self.cls()
 				properlyFormated = False
 				while properlyFormated == False:
 					print(f"Transfering {value} from {fromAccount["itemName"]} to {toAccount["itemName"]}\n")
@@ -551,7 +569,7 @@ class ControllerInstance:
 						date = datetime(int(dateData[2]), int(dateData[0]), int(dateData[1]))
 						properlyFormated = True
 					except:
-						os.system("cls")
+						self.cls()
 						print(f"{dateData} was not properly formated.")
 			case False:
 				date = datetime.now()
@@ -594,7 +612,7 @@ class ControllerInstance:
 	def containerPercentage(self, container : Container):
 		#This is where all of the logic and recursion happens, making sure to properly define the item list for container.
 		def definePercentagesList(sumPercent : float = 0, percentagesList : list = []):
-			os.system("cls")
+			self.cls()
 			#prints the sum percentage, and the list of where the sum comes from. (including what accounts are associated with what values)
 			def printListAndSum():
 				print(f"Sum Percentage = {self.halfRound(sumPercent, 8)}")
@@ -624,7 +642,7 @@ class ControllerInstance:
 					if percent >= 0 and percent <= 1:
 						return percent
 					else:
-						os.system("cls")
+						self.cls()
 						print(f"{percent} is not a valid value, please input a value between 0.00 and 1.00.\n")
 						return percentQuestion(name)
 				#any case where percent had a character in the string, wasn't able to be turned into a float, etc.
@@ -641,16 +659,16 @@ class ControllerInstance:
 									return percentQuestion(name)
 						#the user wasn't trying to delete the item and just made a string that could be .lower()-ed by chance.
 						else:
-							os.system("cls")
+							self.cls()
 							print(f"An error has occured, {percent} is not a valid value.\n")
 							return percentQuestion(name)
 					#the user inputed some weird characters that couldn't be .lower()-ed and wasn't able to turn percent into a float.
 					except:
-						os.system("cls")
+						self.cls()
 						print(f"An error has occured, {percent} is not a valid value.\n")
 						return percentQuestion(name)
 					
-			os.system("cls")
+			self.cls()
 
 			#defines a name list for indexing purposes.
 			nameList = []
@@ -675,7 +693,7 @@ class ControllerInstance:
 
 				if percent == "delete":
 					#when the user tries to delete the item but it wasn't already in the item list.
-					os.system("cls")
+					self.cls()
 					print("You can't delete something that was never there, you can only delete accounts that were already added in the system.")
 				else:
 					percentagesList.append([itemName, percent])
@@ -690,7 +708,7 @@ class ControllerInstance:
 				return definePercentagesList(sumPercent, percentagesList)
 			#if the percent was 1, then the user will be asked if they want to keep editing or not.
 			else:
-				os.system("cls")
+				self.cls()
 				printListAndSum()
 				match self.yesNo(f"Sum Percentage = {sumPercent}. Would you like to move on [y] or continue editing values [n]?\n", clearScreen = False):
 					#if the user wants to coninue on, the values are returned.
@@ -771,13 +789,13 @@ class ControllerInstance:
 			try:
 				instances = int(command)
 				if instances <= 0:
-					os.system("cls")
+					self.cls()
 					print(f"{command} isn't a valid value to be chosen. Please choose a value greater than 0.\n")
 					return self.instanceQuestion()
 				else:
 					return instances
 			except:
-				os.system("cls")
+				self.cls()
 				print(f"{command} isn't a valid option.\n")
 				return self.instanceQuestion()
 
@@ -794,7 +812,7 @@ class ControllerInstance:
 		Displays the date, value, account deposited into, and data for where the money went/left from.
 	"""
 	def display(self, accountInfo : any = None, displayedInstances : int = 10, limitData : bool = True):
-		os.system("cls")
+		self.cls()
 		itemList = ["ID", "Date", "Name", "Account" , " ", "Input", "Output", " ", "Balance", " "]
 		baseItemListLen = len(itemList)
 		baseItemList = itemList.copy()
@@ -972,7 +990,7 @@ class ControllerInstance:
 
 	# View Data Functions
 	def view(self):
-		command = self.question("What would you like to view?\n[Value, Balance, Notes]", list, ["Value", "Balance", "Notes"])
+		command = self.question("What would you like to view?\n[Value, Balance, Notes]\n", list, ["Value", "Balance", "Notes"])
 
 		match command:
 			case "value":
@@ -982,6 +1000,59 @@ class ControllerInstance:
 			case "notes":
 				displayedInstances = self.instanceQuestion("How many instances would you like to choose from?")
 				self.display(displayedInstances = displayedInstances, limitData = False)
+
+	# Edit Data Functions
+	"""
+		Controller for edit state. 
+		Allows selection of whatever you want to edit.
+	"""
+	def edit(self):
+		editFunctions = {
+			"Item" : self.editItem,
+			"Instance" : self.editInstance,
+		}
+		
+		self.cls()
+		editFunctions[self.question("What would you like to edit?\n[Item, Instance]\n", dict, editFunctions)]()
+
+	"""
+		Edit specific aspects about the item you select.
+	"""
+	def editItem(self):
+		self.cls()
+		#select the item
+		itemType, itemName = self.chooseAccount("What item would you like to edit?")
+
+		if itemType == Container:
+			self.cls()
+			def percentagesFunc():
+				item = self.contList.list[self.contList.indexItem(itemName)]
+				oldItemList = item.itemList
+				self.containerPercentage(item)
+				match self.yesNo(f"Are you absolutely sure that you want to commit to your changes to {itemName}'s percentages list?\n[y/n]\n", clearScreen = True, default = False):
+					case True:
+						self.save()
+						self.cls()
+						print(f"Your changes to {itemName}'s percentages list have been applied and all data has been saved.")
+					case False:
+						self.cls()
+						item.itemList = oldItemList
+						print(f"Ok, your changes to {itemName}'s percentages list have been reverted.")
+
+			match self.question(f"What about {itemName} would you like to edit?\n[Name, Percentages]\n", list, ["Name", "Percentages", "percentage"]):
+				case "name":
+					print("WIP, sorry.")
+				case "percentages":
+					percentagesFunc()
+				case "percentage":
+					percentagesFunc()
+					
+					
+		elif itemType == Account:
+			pass
+
+	def editInstance(self):
+		pass
 
 	# Dev Functions
 	"""
@@ -994,7 +1065,7 @@ class ControllerInstance:
 		dev tool, lets me see what the exact value of an account is without using a breakpoint or going inside of the watch.
 	"""
 	def val(self):
-		os.system("cls")
+		self.cls()
 		name = input("What is the name of the account you would like to see the value of?\n")
 		if self.acctList.itemInList(name):
 			print(f"The value of {name} is {self.acctList.list[self.acctList.indexItem(name)].val}")
