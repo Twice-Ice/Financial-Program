@@ -24,7 +24,7 @@ class IDGenerator(SequentialIDGenerator):
 	def __init__(self):
 		super().__init__(ID_COMPRESSOR_SYMBOLS)
 	
-	def generateID(self):
+	def generateID(self, time : dt = dt.now()):
 		"""
 		YY = (20)24
 		EP = Epoch
@@ -36,5 +36,5 @@ class IDGenerator(SequentialIDGenerator):
 		EP has the millions and billions cut off bcs they mostly just represent the year, and these values are replaced by YY so that the year isn't completely lost.
 		MS is limited to the last 2 digits bcs honestly who tf is gonna be inputing new deposits within even the same second???
 		"""
-		number = int(dt.now().strftime("%y") + str(calendar.timegm(dt.now().timetuple()))[-6:] + dt.now().strftime("%f")[-2:])
+		number = int(time.strftime("%y") + str(calendar.timegm(time.timetuple()))[-6:] + time.strftime("%f")[-2:])
 		return super().generateID(number)
