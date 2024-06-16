@@ -16,7 +16,7 @@ class ControllerInstance:
 		self.acctList = ItemList()
 		self.contList = ItemList()
 		self.IDGen = IDGenerator()
-		self.history = [] #[[ID, Date, Value, Account, Notes], etc.]   #OLD: [[Date, Value, Account], etc.]
+		self.history = [] #[[ID, Date, TransactionName, Value, Account, Notes], etc.]
 		self.load()
 		# self.autoCreate("account", "HRT")
 		# self.autoCreate("account", "personal")
@@ -169,16 +169,21 @@ class ControllerInstance:
 			[[str : operation, int/float : comparisonValue], [etc.]]
 			No settings defaults to no comparison, and only checks if the value is a valid input for the selected answer type.
 	"""
-	def question(self, questionStr : str, answerType : any, answerOptions : list = [], clearScreen : bool = False) -> any:
+	def question(self, questionStr : str, answerType : any, answerOptions : list = [], clearScreen : bool = False, firstInstanceCall : bool = True) -> any:
 		if clearScreen:
 			self.cls()
 
 		command = input(questionStr)
 
+		#so that the user is always a line down and corrects the dev's mistake
+		if firstInstanceCall:
+			if questionStr[len(questionStr)-2:len(questionStr)] != "\n":
+				questionStr += "\n"
+
 		def fail(qStr, aType, aOptions, failMsg : str = f"{command} is not a valid option.\n\n"):
 			self.cls()
 			print(failMsg)
-			return self.question(qStr, aType, aOptions)
+			return self.question(qStr, aType, aOptions, firstInstanceCall = False)
 
 		try:
 			if answerType == str:
@@ -652,7 +657,7 @@ class ControllerInstance:
 						percent = percent.lower()
 						if percent == "del" or "delete":
 							#confirms one last time if the user wants to actually delete the item. If not, the percentage is just asked again.
-							match self.yesNo(f"Are you sure you want to delete {name} from {container.name}'s item list?\n"):
+							match self.yesNo(f"Are you sure you want to delete {name} from {container.name}'s item list?\n[y/n]\n"):
 								case True:
 									return "delete"
 								case False:
@@ -718,8 +723,12 @@ class ControllerInstance:
 					case False:
 						return definePercentagesList(sumPercent, percentagesList)
 		
-		#sets the container's itemList as the list returned from the percentages List.
-		container.itemList = definePercentagesList()
+		if container.itemList == []:
+			#sets the container's itemList as the list returned from the percentages List.
+			container.itemList = definePercentagesList()
+		else:
+			#if the user is just editing the an already defined percentage list then they are editing the values rather than completely rewriting them from scratch.
+			container.itemList = definePercentagesList(1, container.itemList)
 
 	# Display Functions
 
@@ -1015,6 +1024,43 @@ class ControllerInstance:
 		self.cls()
 		editFunctions[self.question("What would you like to edit?\n[Item, Instance]\n", dict, editFunctions)]()
 
+	def rename(self, type : Container | Account, oldName : str, newName : str):
+		"""
+			## Rename
+			Handles all relevant information and renames all data that used the old name to now use the new name.\n
+			Saves and clears screen return.
+
+			### type : \n
+				type of item you are renaming\n
+			### oldName : \n
+				current name of the item\n
+			### newName : \n
+				new name to be applied to item and relevant data which calls the item.
+		"""
+		#defines item
+		if type == Container:
+			item = self.contList.list[self.contList.indexItem(oldName)]
+		elif type == Account:
+			item = self.acctList.list[self.acctList.indexItem(oldName)]
+
+		#renames item
+		item.name = newName
+
+		#renames history calls of item
+		for item in self.history:
+			if item[4] == oldName:
+				item[4] = newName
+
+		#renames all calls of item in container itemLists
+		for item in self.contList.list:
+			for percentageItem in item.itemList:
+				if percentageItem[0] == oldName:
+					percentageItem[0] = newName
+
+		#saves and clears screen.
+		self.save()
+		self.cls()
+		
 	"""
 		Edit specific aspects about the item you select.
 	"""
@@ -1024,11 +1070,19 @@ class ControllerInstance:
 		itemType, itemName = self.chooseAccount("What item would you like to edit?")
 
 		if itemType == Container:
-			self.cls()
-			def percentagesFunc():
+			choice = self.question(f"What about {itemName} would you like to edit?\n[Name, Percentages]\n", list, ["Name", "Percentages", "percentage"], clearScreen = True)
+
+			if choice == "name":
+				newName = self.question(f"What would you like to rename {itemName} to?\n", str, clearScreen = True)
+				self.rename(Container, itemName, newName)
+
+			if choice == "percentages" or choice == "percentage":
 				item = self.contList.list[self.contList.indexItem(itemName)]
+				#applies all changes
 				oldItemList = item.itemList
 				self.containerPercentage(item)
+				#makes sure the user 100% wants to commit their changes.
+				#if the user says no then all changes that were made are imediately reverted.
 				match self.yesNo(f"Are you absolutely sure that you want to commit to your changes to {itemName}'s percentages list?\n[y/n]\n", clearScreen = True, default = False):
 					case True:
 						self.save()
@@ -1037,22 +1091,22 @@ class ControllerInstance:
 					case False:
 						self.cls()
 						item.itemList = oldItemList
-						print(f"Ok, your changes to {itemName}'s percentages list have been reverted.")
-
-			match self.question(f"What about {itemName} would you like to edit?\n[Name, Percentages]\n", list, ["Name", "Percentages", "percentage"]):
-				case "name":
-					print("WIP, sorry.")
-				case "percentages":
-					percentagesFunc()
-				case "percentage":
-					percentagesFunc()
+						print(f"Your changes to {itemName}'s percentages list have been reverted.")
 					
 					
 		elif itemType == Account:
-			pass
+			match self.yesNo(f"The only editable aspect of an account is the name of it, would you like to edit the name of {itemName}?\n[y/n]\n"):
+				case True:
+					newName = self.question(f"What would you like to rename {itemName} to?\n", str, clearScreen = True)
+					self.rename(Account, itemName, newName)
+				case False:
+					self.cls()
+					print(f"Please note that in order to change the percentages used for a specific account, you'll have to edit the container in which the account is stored.")
+					return
 
 	def editInstance(self):
-		pass
+		self.cls()
+		print("WIP! no functional use set up yet.")
 
 	# Dev Functions
 	"""
