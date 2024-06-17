@@ -868,6 +868,8 @@ class ControllerInstance:
 				
 				#The name of the account which was deposited to
 				account = self.history[i][4]
+				if not (self.acctList.itemInList(account) or self.contList.itemInList(account)):
+					raise NameError(f"{account} is not a valid item to make a transaction for. The data is invalid.")
 
 				balance = self.getBal(i)
 
@@ -1048,7 +1050,7 @@ class ControllerInstance:
 
 		#renames history calls of item
 		for item in self.history:
-			if item[4] == oldName:
+			if item[4].lower() == oldName.lower():
 				item[4] = newName
 
 		#renames all calls of item in container itemLists
