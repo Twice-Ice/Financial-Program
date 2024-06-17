@@ -1054,7 +1054,7 @@ class ControllerInstance:
 		#renames all calls of item in container itemLists
 		for item in self.contList.list:
 			for percentageItem in item.itemList:
-				if percentageItem[0] == oldName:
+				if percentageItem[0].lower() == oldName.lower():
 					percentageItem[0] = newName
 
 		#saves and clears screen.
