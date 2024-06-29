@@ -164,12 +164,14 @@ class ControllerInstance:
 		asks the user a question, along with a list of possible answer options. 
 		Then if the user says something that isn't an option, the question is asked again, otherwise, the user's answer is returned.
 
+		default is the default answer option
+
 		Int or Float answerOptions:
 			[str : operation, int/float : comparisonValue]
 			[[str : operation, int/float : comparisonValue], [etc.]]
 			No settings defaults to no comparison, and only checks if the value is a valid input for the selected answer type.
 	"""
-	def question(self, questionStr : str, answerType : any, answerOptions : list = [], clearScreen : bool = False, firstInstanceCall : bool = True) -> any:
+	def question(self, questionStr : str, answerType : any, answerOptions : list = [],  default : any = None, clearScreen : bool = False, firstInstanceCall : bool = True) -> any:
 		if clearScreen:
 			self.cls()
 
@@ -186,7 +188,14 @@ class ControllerInstance:
 			return self.question(qStr, aType, aOptions, firstInstanceCall = False)
 
 		try:
-			if answerType == str:
+			#default answer option
+			if command == "":
+				if default != None:
+					return default
+				else:
+					fail(questionStr, answerType, answerOptions, f"There is no default answer, please choose a valid option.\n\n")
+
+			elif answerType == str:
 				return str(command)
 			elif answerType == int or answerType == float:
 				#if there's settings
@@ -1000,17 +1009,69 @@ class ControllerInstance:
 		print(f"{lineStr}|")
 
 	# View Data Functions
-	def view(self):
-		command = self.question("What would you like to view?\n[Value, Balance, Notes]\n", list, ["Value", "Balance", "Notes"])
+	def view(self, command : str = None):
+		if command == None:
+			command = self.question("What would you like to view?\n[Value, Balance, Notes]\n", list, ["Value", "Balance", "Notes"])
 
 		match command:
 			case "value":
-				pass
+				self.cls()
+				#prompts the user to choose the account and instance they want to view
+				itemType, itemName = self.chooseAccount("What item would you like to view the value of?\n")
+				instance = self.question(f"What instance would you like to view the value of {itemName} for?\n(Enter for most recent)\n", int, default = -1, clearScreen = True)
+				#code for defaulting to most recent instance
+				if instance == -1:
+					instance = len(self.history) - 1
+
+				#gets the sum of the item at instance
+				if itemType == Container:
+					value = self.contList.list[self.contList.indexItem(itemName)].getSum(self.contList, self.acctList, instance)
+				elif itemType == Account:
+					value = self.acctList[self.acctList.indexItem(itemName)].getSum(instance)
+
+				#formats the values
+				value = str(self.halfRound(value, 2))
+
+				#adds ending zeros for money formating.
+				num = str(value).split(".")
+				num[1] = num[1] + "0" * (2 - len(num[1]))
+				num = f"{num[0]}.{num[1]}"
+
+				#displays value
+				self.cls()
+				print(f"The value of {itemName} at the instance, {instance} is:\n${num}")
+
 			case "balance":
-				pass
+				#prompts the user to choose an instance at which they want to view the balance of all sum accounts.
+				instance = self.question("What instance would you like to view the balance for?\n(Enter for most recent)\n", int, default = -1, clearScreen = True)
+				self.cls()
+				print(f"The sum balance of all items is:\n{self.getBal(instance)}")
 			case "notes":
-				displayedInstances = self.instanceQuestion("How many instances would you like to choose from?")
-				self.display(displayedInstances = displayedInstances, limitData = False)
+				#prompts the user to select the ID they want to view.
+				selectedID = self.question("Please input the ID of the instance you would like to view the notes of.\n(type \"display\" in order to see instances before selecting.)\n", str, clearScreen=True)
+				
+				#if they wanted to view some displayed instances, then they answer all relevant questions for displaying the data to them.
+				if selectedID.lower() == "display":
+					self.cls()
+					accountInfo = self.chooseAccount("What account would you like to view?")
+					displayedInstances = self.instanceQuestion("How many instances back would you like to see?\n")
+					self.display(accountInfo = accountInfo, displayedInstances = displayedInstances, limitData = False)
+					selectedID = self.question("\nPlease input the ID of the instance you would like to view the notes of.\n", str)
+
+				#loops through all items in self.history to look for the ID they selected.
+				self.cls()
+				for item in self.history:
+					if item[0] == selectedID:
+						if item[5] == "":
+							print(f"{selectedID} has no available notes.")
+						else:
+							print(f"The notes of of instance {selectedID} are:\n{item[5]}")
+						#returns if successful
+						return
+
+				#fails the users' prompt if there was no ID that matched the ID they selected.
+				self.question(f"The ID you selected ({selectedID}) is not a valid ID, please choose again.\nENTER TO CONTINUE", str, clearScreen=True)
+				self.view("notes")
 
 	# Edit Data Functions
 	"""
@@ -1131,8 +1192,14 @@ class ControllerInstance:
 
 	"""
 		Returns the balance of the sum of all accounts at instance.
+
+		Instance defaults to the most recent instance in self.history. Input -1 to get this result.
 	"""
-	def getBal(self, instance):
+	def getBal(self, instance : int = -1):
+		#can't use "self."history in the line above so we have to just put -1 if we want the most recent instance.
+		if instance == -1:
+			instance = len(self.history) - 1
+
 		value = 0
 		for account in self.acctList.list:
 			value += account.getSum(instance)
