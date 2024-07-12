@@ -500,22 +500,23 @@ class ControllerInstance:
 				value = abs(value)
 
 			transactionName = self.question("What would you like to call this transaction?\n", str, clearScreen = True)
-			notes = self.question("Is there any notes for this transaction?\n[Enter to continue]\n", str, clearScreen = True)
-			doDate = self.question("would you like to set a specific date?\n[y/n]\n", list, ["y", "n", ""], clearScreen = True)
-			if doDate == "y":
-				self.cls()
-				properlyFormated = False
-				while properlyFormated == False:
-					dateData = input("Please format as follows:\nMM/DD/YYYY\n")
-					try:
-						dateData = dateData.split("/")
-						date = datetime(int(dateData[2]), int(dateData[0]), int(dateData[1]))
-						properlyFormated = True
-					except:
-						self.cls()
-						print(f"{dateData} was not properly formated.")
-			else:
-				date = datetime.now()
+			notes = self.question("Is there any notes for this transaction?\n[Enter to continue]\n", str, default = "", clearScreen = True)
+			doDate = self.yesNo("Would you like to set a specific date?\n[y/n]\n", default = False, clearScreen = True)
+			match doDate:
+				case True:
+					self.cls()
+					properlyFormated = False
+					while properlyFormated == False:
+						dateData = input("Please format as follows:\nMM/DD/YYYY\n")
+						try:
+							dateData = dateData.split("/")
+							date = datetime(int(dateData[2]), int(dateData[0]), int(dateData[1]))
+							properlyFormated = True
+						except:
+							self.cls()
+							print(f"{dateData} was not properly formated.")
+				case False:
+					date = datetime.now()
 			self.history.append([self.IDGen.generateID(), date, transactionName, value * typeMult, itemName, notes])
 		else:
 			self.cls()
@@ -957,13 +958,25 @@ class ControllerInstance:
 		#defines every input interaction case for all accounts with printList
 		printList = formatHistoryData(limitData)
 		completePrintList = formatHistoryData(False)
+		#includes the final instance in the columnSize list def because it is used when printing all the data regardless of which item was selected to be displayed.
+		printListWithEndInstance = printList + [completePrintList[len(completePrintList) - 1]] #printList (limited) + end instance of all print options.
 
 		#Determines the maximum size of each column in the itemList. This is then used later for spacing each item properly.
 		columnSize = []
 		for j in range(len(itemList)):
 			size = len(str(itemList[j]))
-			for i in range(len(printList)):
-				itemSize = len(str(printList[i][j]))
+			for i in range(len(printListWithEndInstance)):
+				try: #the item is a number
+					#check for if the item is a number or not.
+					float(printListWithEndInstance[i][j])
+					#ending zeros
+					num = str(printListWithEndInstance[i][j]).split(".")
+					num[1] = num[1] + "0" * (2 - len(num[1]))
+					num = f"{num[0]}.{num[1]}"
+					itemSize = len(str(num))
+				except:
+					itemSize = len(str(printListWithEndInstance[i][j]))
+
 				if itemSize > size:
 					size = itemSize
 			columnSize.append(size)
@@ -1005,7 +1018,17 @@ class ControllerInstance:
 		print(self.createDivLine(lineLen))
 		lineStr = ""
 		for i in range(len(completePrintList[len(completePrintList[len(completePrintList) - 1])])):
-			lineStr += f"| {self.alignText(str(completePrintList[len(completePrintList) - 1][i]), columnSize[i])} "
+			instanceCase = str(completePrintList[len(completePrintList) - 1][i])
+			try:
+				float(instanceCase)
+
+				num = str(instanceCase).split(".")
+				num[1] = num[1] + "0" * (2 - len(num[1]))
+				num = f"{num[0]}.{num[1]}"
+
+				lineStr += f"| {self.alignText(num, columnSize[i], alignment = "right")} "
+			except:
+				lineStr += f"| {self.alignText(instanceCase, columnSize[i])} "
 		print(f"{lineStr}|")
 
 	# View Data Functions
@@ -1087,9 +1110,9 @@ class ControllerInstance:
 		self.cls()
 		editFunctions[self.question("What would you like to edit?\n[Item, Instance]\n", dict, editFunctions)]()
 
-	def rename(self, type : Container | Account, oldName : str, newName : str):
+	def renameItem(self, type : Container | Account, oldName : str, newName : str):
 		"""
-			## Rename
+			## Rename Item
 			Handles all relevant information and renames all data that used the old name to now use the new name.\n
 			Saves and clears screen return.
 
@@ -1137,7 +1160,7 @@ class ControllerInstance:
 
 			if choice == "name":
 				newName = self.question(f"What would you like to rename {itemName} to?\n", str, clearScreen = True)
-				self.rename(Container, itemName, newName)
+				self.renameItem(Container, itemName, newName)
 
 			if choice == "percentages" or choice == "percentage":
 				item = self.contList.list[self.contList.indexItem(itemName)]
@@ -1161,15 +1184,50 @@ class ControllerInstance:
 			match self.yesNo(f"The only editable aspect of an account is the name of it, would you like to edit the name of {itemName}?\n[y/n]\n"):
 				case True:
 					newName = self.question(f"What would you like to rename {itemName} to?\n", str, clearScreen = True)
-					self.rename(Account, itemName, newName)
+					self.renameItem(Account, itemName, newName)
 				case False:
 					self.cls()
 					print(f"Please note that in order to change the percentages used for a specific account, you'll have to edit the container in which the account is stored.")
 					return
 
 	def editInstance(self):
+		selectedID = self.question("Please input the ID of the instance you would like to edit.\n(type \"display\" in order to see instances before selecting.)\n", str, clearScreen=True)
+				
+		#if they wanted to view some displayed instances, then they answer all relevant questions for displaying the data to them.
+		if selectedID.lower() == "display":
+			self.cls()
+			accountInfo = self.chooseAccount("What account would you like to view?")
+			displayedInstances = self.instanceQuestion("How many instances back would you like to see?\n")
+			self.display(accountInfo = accountInfo, displayedInstances = displayedInstances, limitData = False)
+			selectedID = self.question("\nPlease input the ID of the instance you would like to view the notes of.\n", str)
+
+		#loops through all items in self.history to look for the ID they selected.
 		self.cls()
-		print("WIP! no functional use set up yet.")
+		for item in self.history:
+			if item[0] == selectedID:
+				editInstanceFunctions = {
+					"Date" : self.WIP,
+					"Name" : self.editInstanceName,
+					"Account" : self.WIP,
+					"Value" : self.WIP,
+				}
+
+				editInstanceFunctions[self.question(f"What would you like to edit about the instance {selectedID}?\n[Data, Name, Account, Value]\n", dict, editInstanceFunctions, clearScreen=True)](selectedID)
+				return
+	
+	def editInstanceName(self, ID):
+		"""
+			## Edit Instance Name
+			Prompts the user to edit the name of the instance with {ID} and returns after doing so.
+
+			### ID : \n
+				ID of instance to be edited
+		"""
+		for item in self.history:
+			if item[0] == ID:
+				item[2] = self.question(f"What would you like to rename the instance ({ID}) called \"{item[2]}\" to?\n", str, clearScreen=True)
+				self.save()
+				return
 
 	# Dev Functions
 	"""
@@ -1204,6 +1262,9 @@ class ControllerInstance:
 		for account in self.acctList.list:
 			value += account.getSum(instance)
 		return math.floor(value*100)/100
+
+	def WIP(self):
+		print("WIP sorry")
 
 	#WIP Functions
 	def remove(self):
