@@ -1212,7 +1212,9 @@ class ControllerInstance:
 					return
 
 	def editInstance(self):
-		selectedID = self.question("Please input the ID of the instance you would like to edit.\n(type \"display\" in order to see instances before selecting.)\n", str, clearScreen=True)
+		self.cls()
+		self.display()
+		selectedID = self.question("\nPlease input the ID of the instance you would like to edit.\n(type \"display\" in order to see instances before selecting.)\n", str)
 				
 		#if they wanted to view some displayed instances, then they answer all relevant questions for displaying the data to them.
 		if selectedID.lower() == "display":
