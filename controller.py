@@ -138,6 +138,21 @@ class ControllerInstance:
 	def cls(self):
 		os.system("cls")
 
+	"""
+		sorts all instances of transactions history by date using bubble sort.
+	"""
+	def sortHistoryByDate(self) -> None:
+		fixedList = self.history.copy()
+
+		for _ in range(len(fixedList)):
+			for i in range(len(fixedList) - 1):
+				if fixedList[i][1] > fixedList[i+1][1]:
+					temp = fixedList[i]
+					fixedList[i] = fixedList[i+1]
+					fixedList[i+1] = temp
+
+		self.history = fixedList
+
 	# Addaptive Question Functions
 	"""
 		Prompts the user with a yes or no question. The user can always press enter to just use the default option.
@@ -272,7 +287,6 @@ class ControllerInstance:
 		#Transactions section identifier
 		saveData += "TRANSACTIONS\n"
 
-
 		#loops through all transactions
 		for i in range(len(self.history)):
 			#and adds to saveData, the history instance's information. 
@@ -366,6 +380,9 @@ class ControllerInstance:
 						self.autoTransaction(id, date, name, value, account, notes)
 					# else:
 						# raise TypeError("Looks like somehow the save/load functions aren't communicating properly given the fact that somehow there isn't a loadState???\nEven though the loadstate is defined as the first line of the save...")
+
+		#sorts all history instances upon loading file to avoid calling the bubble sort too much.
+		self.sortHistoryByDate()
 
 	# Auto Functions
 	"""
@@ -517,7 +534,7 @@ class ControllerInstance:
 							print(f"{dateData} was not properly formated.")
 				case False:
 					date = datetime.now()
-			self.history.append([self.IDGen.generateID(), date, transactionName, value * typeMult, itemName, notes])
+			self.history.append([len(self.history), date, transactionName, value * typeMult, itemName, notes])
 		else:
 			self.cls()
 			print(f"{itemName} is not a valid account or container option.")
@@ -1001,17 +1018,20 @@ class ControllerInstance:
 		for i in range(len(printList) - displayedInstances if displayedInstances > 0 else 0, len(printList)):
 			lineStr = ""
 			for j in range(len(printList[i])):
-				try: #the item is a number
-					#check for if the item is a number or not.
-					float(printList[i][j])
-					#ending zeros
-					num = str(printList[i][j]).split(".")
-					num[1] = num[1] + "0" * (2 - len(num[1]))
-					num = f"{num[0]}.{num[1]}"
+				if j == 0: #aligns ids to the right side of the column
+					lineStr += f"| {self.alignText(str(printList[i][j]), columnSize[j], alignment="right")} "
+				else:
+					try: #the item is a number
+						#check for if the item is a number or not.
+						float(printList[i][j])
+						#ending zeros
+						num = str(printList[i][j]).split(".")
+						num[1] = num[1] + "0" * (2 - len(num[1]))
+						num = f"{num[0]}.{num[1]}"
 
-					lineStr += f"| {self.alignText(num, columnSize[j], alignment = "right")} "
-				except: #the item is not a number
-					lineStr += f"| {self.alignText(str(printList[i][j]), columnSize[j])} "
+						lineStr += f"| {self.alignText(num, columnSize[j], alignment = "right")} "
+					except: #the item is not a number
+						lineStr += f"| {self.alignText(str(printList[i][j]), columnSize[j])} "
 			print(f"{lineStr}|")
 		# print(len(printList))
 
@@ -1050,7 +1070,7 @@ class ControllerInstance:
 				if itemType == Container:
 					value = self.contList.list[self.contList.indexItem(itemName)].getSum(self.contList, self.acctList, instance)
 				elif itemType == Account:
-					value = self.acctList[self.acctList.indexItem(itemName)].getSum(instance)
+					value = self.acctList.list[self.acctList.indexItem(itemName)].getSum(instance)
 
 				#formats the values
 				value = str(self.halfRound(value, 2))
@@ -1070,8 +1090,9 @@ class ControllerInstance:
 				self.cls()
 				print(f"The sum balance of all items is:\n{self.getBal(instance)}")
 			case "notes":
+				self.display()
 				#prompts the user to select the ID they want to view.
-				selectedID = self.question("Please input the ID of the instance you would like to view the notes of.\n(type \"display\" in order to see instances before selecting.)\n", str, clearScreen=True)
+				selectedID = self.question("\nPlease input the ID of the instance you would like to view the notes of.\n(type \"display\" in order to see more instances before selecting.)\n", str)
 				
 				#if they wanted to view some displayed instances, then they answer all relevant questions for displaying the data to them.
 				if selectedID.lower() == "display":
@@ -1212,7 +1233,7 @@ class ControllerInstance:
 					"Value" : self.WIP,
 				}
 
-				editInstanceFunctions[self.question(f"What would you like to edit about the instance {selectedID}?\n[Data, Name, Account, Value]\n", dict, editInstanceFunctions, clearScreen=True)](selectedID)
+				editInstanceFunctions[self.question(f"What would you like to edit about the instance {selectedID}?\n[Date, Name, Account, Value]\n", dict, editInstanceFunctions, clearScreen=True)](selectedID)
 				return
 	
 	def editInstanceName(self, ID):
@@ -1263,7 +1284,22 @@ class ControllerInstance:
 			value += account.getSum(instance)
 		return math.floor(value*100)/100
 
-	def WIP(self):
+	"""
+		Checks the number of incorrectly sorted transaction dates and returns those dates.
+	"""
+	def missmatchedDates(historyList : list):
+		counter = 0
+		oldDt = historyList[0][1]
+		for item in historyList:
+			newDt = item[1]
+			if newDt < oldDt:
+				counter += 1
+				print(newDt, oldDt)
+			oldDt = newDt
+		
+		print(f"There are {counter} incorrectly sorted dates.")
+
+	def WIP(self, _Arg = None, _Arg2 = None, _Arg3 = None):
 		print("WIP sorry")
 
 	#WIP Functions
