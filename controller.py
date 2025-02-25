@@ -79,7 +79,7 @@ class ControllerInstance:
 
 		returnDict is used so that the dev can store the itemType and the itemName in seperate indeces inside of a dict.
 	"""
-	def chooseAccount(self, questionString, returnDict : bool = False) -> dict[any, str]: 
+	def chooseAccount(self, questionString, returnDict : bool = False) -> dict[any, str]|None: 
 		#asks the user the prompting question, and then also displays all valid account options and lowercases the user's answer.
 		chosenAccount = input(f"{questionString}\n{self.printContainers()}\n")
 
@@ -88,6 +88,8 @@ class ControllerInstance:
 			returnInfo = {"itemType" : Account, "itemName" : chosenAccount}
 		elif self.contList.itemInList(chosenAccount):
 			returnInfo = {"itemType" : Container, "itemName" : chosenAccount}
+		elif chosenAccount == "":
+			returnInfo = None
 		else:
 			self.cls()
 			#if the choice wasn't valid, the user is told so, and then prompted to choose again.
@@ -96,7 +98,10 @@ class ControllerInstance:
 		
 		#only returns as a dictionary if the dev wants it too.
 		if not returnDict:
-			return returnInfo.values()
+			if returnInfo != None:
+				return returnInfo.values()
+			else: #when the user has chosen not to display anything by entering literally nothing into the input
+				return None
 		else:
 			return returnInfo
 
@@ -208,7 +213,7 @@ class ControllerInstance:
 				if default != None:
 					return default
 				else:
-					fail(questionStr, answerType, answerOptions, f"There is no default answer, please choose a valid option.\n\n")
+					return fail(questionStr, answerType, answerOptions, f"There is no default answer, please choose a valid option.\n\n")
 
 			elif answerType == str:
 				return str(command)
@@ -534,7 +539,14 @@ class ControllerInstance:
 							print(f"{dateData} was not properly formated.")
 				case False:
 					date = datetime.now()
-			self.history.append([len(self.history), date, transactionName, value * typeMult, itemName, notes])
+			
+			try:
+				transactionID = int(self.history[len(self.history) - 1][0]) + 1
+			except:
+				transactionID = len(self.history)
+				print(f"There was an error when trying to set the ID of this transaction.\nThe most recent ID was not a valid integer. ({self.history[len(self.history)-1][0]})\nThe ID has been set as {len(self.history)}.")	
+
+			self.history.append([transactionID, date, transactionName, value * typeMult, itemName, notes])
 		else:
 			self.cls()
 			print(f"{itemName} is not a valid account or container option.")
@@ -816,6 +828,7 @@ class ControllerInstance:
 		questions the user on how many isntances they would like to display. (default is 10)
 	"""
 	def instanceQuestion(self, questionStr : str = "How many instances back would you like to see?"):
+		self.cls()
 		command = input(f"{questionStr}\n(\"All\" for all instances, [ENTER] for the last 10, or any number greater than 0.)\n")
 		if command.lower() == "all":
 			return 0

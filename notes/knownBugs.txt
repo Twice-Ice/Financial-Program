@@ -5,3 +5,13 @@
     self.autoCreate("account", "personal")
     self.autoCreate("Container", "Total", [["HRT", .5], ["Misc", .5]])
     self.autoCreate("Container", "Misc", [["HRT", .5], ["personal", .5]])
+
+2.
+    You can create a container ("c1" for exmaple),
+    create another container ("c2"),
+    edit c1 to deposit into c2
+    and then create an infinite recusion loop when doing any sort of action.
+    There's nothing in place to avoid this.
+
+3.
+    When editing containers, if you set the new value of an item to be 0.00% then the item does not get removed from the container's list of items
