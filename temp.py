@@ -7,7 +7,4 @@ import datetime
 
 controller = ControllerInstance()
 
-for i in range(len(controller.history)):
-    controller.history[i][0] = i+1
-
-controller.save()
+print(controller.history[0])

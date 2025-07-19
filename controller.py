@@ -58,13 +58,17 @@ class ControllerInstance:
 			case "quit":#
 				print("Have a good one!\n\n")
 				gb.DOEXIT = True
-			case "print":
+			case "file":
 				print(self.file.filePath, self.file.metaPath)
 			case "bal":
 				self.cls()
 				print(f"The sum Balance of all accounts is: {self.getBal(gb.COM_INSTANCE)}")
 			case "view":
 				self.view()
+			case "reload":
+				self.reload()
+			case "debug":
+				self.enterDebugMode()
 			case _:
 				print(f"{command} is not a valid option! Type help to see all available commands.")
 
@@ -158,13 +162,28 @@ class ControllerInstance:
 
 		self.history = fixedList
 
+	"""
+		Reloads the data within self.history, but first prompts the user to make sure they know that the most recent data won't be saved.
+		If not, then the function is canceled.
+	"""
+	def reload(self) -> None:
+		if self.yesNo("Reloading has the potential to delete your currently loaded data,\nare you sure you want to do this? (y/n)\n", default=None):
+			self.load()
+			self.sortHistoryByDate()
+			self.cls()
+			print("All transactions and accounts have been reloaded.")
+		else:
+			self.cls()
+			print("Reload canceled.")
+
 	# Addaptive Question Functions
 	"""
 		Prompts the user with a yes or no question. The user can always press enter to just use the default option.
 	"""
-	def yesNo(self, questionStr, clearScreen : bool = True, default : bool = True) -> bool:
+	def yesNo(self, questionStr, clearScreen : bool = True, default : bool|None = True, _leadingMessage : str = "") -> bool:
 		if clearScreen:
 			self.cls()
+		print(_leadingMessage)
 		command = input(questionStr)
 		try:
 			command = command.lower()
@@ -174,11 +193,14 @@ class ControllerInstance:
 				case "n":
 					return False
 				case "":
-					return default
+					if default != None:
+						return default
+					else:
+						return self.yesNo(questionStr, default=default, _leadingMessage="There is no default option, please answer.\n")
 				case _:
-					return self.yesNo(f"{command} is not a valid option, please try again.\n\n{questionStr}")
+					return self.yesNo(questionStr, default=default, _leadingMessage=f"{command} is not a valid option, please try again.\n")
 		except:
-			return self.yesNo(f"{command} is not a valid option, please try again.\n\n{questionStr}")
+			return self.yesNo(questionStr, default=default, _leadingMessage=f"{command} is not a valid option, please try again.\n")
 
 	"""
 		asks the user a question, along with a list of possible answer options. 
@@ -262,6 +284,26 @@ class ControllerInstance:
 		except:
 			return fail(questionStr, answerType, answerOptions)
 
+	# Misc Question Functions
+	def getDate(self, clearScreen : bool = True):
+		doDate = self.yesNo("Would you like to set a specific date?\n[y/n]\n", default = False, clearScreen = clearScreen)
+		match doDate:
+			case True:
+				self.cls()
+				properlyFormated = False
+				while properlyFormated == False:
+					dateData = input("Please format as follows:\nMM/DD/YYYY\n")
+					try:
+						dateData = dateData.split("/")
+						date = datetime(int(dateData[2]), int(dateData[0]), int(dateData[1]))
+						properlyFormated = True
+					except:
+						self.cls()
+						print(f"{dateData} was not properly formated.")
+			case False:
+				date = datetime.now()
+		
+		return date
 
 # Save and Load Functions
 
@@ -323,6 +365,7 @@ class ControllerInstance:
 	"""
 	def load(self):
 		#resets history and all item lists.
+		gb.COM_INSTANCE = 0
 		self.history = []
 		self.acctList = ItemList()
 		self.contList = ItemList()
@@ -452,8 +495,10 @@ class ControllerInstance:
 			"Save" : "Saves the user's data from the current instance of the program. You don't have to use this however because the program auto saves after every transaction and creation.",
 			"Load" : "Loads the user's data. [UNDER CONSTRUCTION], eventually specific saves will be selectable.",
 			"Quit" : "Quits the program. Does not save before quiting.",
-			"Print" : "Displays the location of the save file within file explorer.",
-			"Bal" : "Displays the balance of all accounts at the most recent instance. This information is also displayed when just displaying as normal."
+			"File" : "Displays the location of the save file within file explorer.",
+			"Bal" : "Displays the balance of all accounts at the most recent instance. This information is also displayed when just displaying as normal.",
+			"Reload" : "Reloads all data, not saving the current data. This allows you to see any changes done to your finances.txt",
+			"Debug" : "[UNDER CONSTRUCTION] - Check codebase for access to what it's \"Supposed to do\""
 		}
 
 		keys = []
@@ -523,22 +568,7 @@ class ControllerInstance:
 
 			transactionName = self.question("What would you like to call this transaction?\n", str, clearScreen = True)
 			notes = self.question("Is there any notes for this transaction?\n[Enter to continue]\n", str, default = "", clearScreen = True)
-			doDate = self.yesNo("Would you like to set a specific date?\n[y/n]\n", default = False, clearScreen = True)
-			match doDate:
-				case True:
-					self.cls()
-					properlyFormated = False
-					while properlyFormated == False:
-						dateData = input("Please format as follows:\nMM/DD/YYYY\n")
-						try:
-							dateData = dateData.split("/")
-							date = datetime(int(dateData[2]), int(dateData[0]), int(dateData[1]))
-							properlyFormated = True
-						except:
-							self.cls()
-							print(f"{dateData} was not properly formated.")
-				case False:
-					date = datetime.now()
+			date = self.getDate()
 			
 			try:
 				transactionID = int(self.history[len(self.history) - 1][0]) + 1
@@ -1028,7 +1058,7 @@ class ControllerInstance:
 		print(self.createDivLine(lineLen))
 
 		#prints all item information divided by bars like such: "|  |"
-		for i in range(len(printList) - displayedInstances if displayedInstances > 0 else 0, len(printList)):
+		for i in range(len(printList) - displayedInstances if (displayedInstances > 0 and len(printList) - displayedInstances > 0) else 0, len(printList)):
 			lineStr = ""
 			for j in range(len(printList[i])):
 				if j == 0: #aligns ids to the right side of the column
@@ -1242,10 +1272,10 @@ class ControllerInstance:
 		for item in self.history:
 			if item[0] == selectedID:
 				editInstanceFunctions = {
-					"Date" : self.WIP,
+					"Date" : self.editInstanceDate,
 					"Name" : self.editInstanceName,
 					"Account" : self.WIP,
-					"Value" : self.WIP,
+					"Value" : self.editInstanceValue,
 				}
 
 				editInstanceFunctions[self.question(f"What would you like to edit about the instance {selectedID}?\n[Date, Name, Account, Value]\n", dict, editInstanceFunctions, clearScreen=True)](selectedID)
@@ -1263,6 +1293,37 @@ class ControllerInstance:
 			if item[0] == ID:
 				item[2] = self.question(f"What would you like to rename the instance ({ID}) called \"{item[2]}\" to?\n", str, clearScreen=True)
 				self.save()
+				return
+
+	def editInstanceDate(self, ID):
+		"""
+			## Edit Instance Date
+			Prompts the user to edit the date of the instance with {ID} and returns after doing so.
+
+			### ID : \n
+				Id of instance to be edited
+		"""
+		for item in self.history:
+			if item[0] == ID:
+				item[1] = self.getDate()
+				self.save()
+				return
+
+	def editInstanceValue(self, ID):
+		"""
+			## Edit Instance Value
+			Prompts the user to edit the value of the instance with {ID} and returns after doing so.
+
+			### ID : \n
+				Id of instance to be edited
+		"""
+		for item in self.history:
+			if item[0] == ID:
+				newItem = abs(self.question(f"What would you like to change instance {ID}'s value oF {item[3]} to?\n(Enter Nothing to leave it as the same value)\n", float, default=item[3], clearScreen=True))
+				sign = -1 if item[3] < 0 else 1
+				if sign * newItem != item[3]:
+					item[3] = sign * newItem
+					self.save()
 				return
 
 	# Dev Functions
@@ -1316,6 +1377,11 @@ class ControllerInstance:
 
 	def WIP(self, _Arg = None, _Arg2 = None, _Arg3 = None):
 		print("WIP sorry")
+
+	def enterDebugMode(self):
+		self.WIP()
+		"""This is supposed to create a whole new file for the user to mess around in instead of fucking around with the files manually.
+		This allows for the user to test things out and ideas without fucking up their normal financial system."""
 
 	#WIP Functions
 	def remove(self):
