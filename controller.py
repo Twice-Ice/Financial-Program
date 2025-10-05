@@ -18,6 +18,7 @@ class ControllerInstance:
 		self.IDGen = IDGenerator()
 		self.history = [] #[[ID, Date, TransactionName, Value, Account, Notes], etc.]
 		self.load()
+		self.autosave = True
 		# self.autoCreate("account", "HRT")
 		# self.autoCreate("account", "personal")
 		# self.autoCreate("Account", "test")
@@ -45,6 +46,8 @@ class ControllerInstance:
 				self.create()
 			case "display":#
 				self.manualDisplay()
+			case "disp" :
+				self.manualDisplay()
 			case "breakpoint":#
 				self.breakpoint()
 			case "val":#
@@ -57,6 +60,7 @@ class ControllerInstance:
 				self.load()
 			case "quit":#
 				print("Have a good one!\n\n")
+				self.save()
 				gb.DOEXIT = True
 			case "file":
 				print(self.file.filePath, self.file.metaPath)
@@ -69,6 +73,10 @@ class ControllerInstance:
 				self.reload()
 			case "debug":
 				self.enterDebugMode()
+			case "autosave":
+				self.cls()
+				self.autosave = not self.autosave
+				print(f"Autosave is now set to {self.autosave}.\n\n")
 			case _:
 				print(f"{command} is not a valid option! Type help to see all available commands.")
 
@@ -286,23 +294,22 @@ class ControllerInstance:
 
 	# Misc Question Functions
 	def getDate(self, clearScreen : bool = True):
-		doDate = self.yesNo("Would you like to set a specific date?\n[y/n]\n", default = False, clearScreen = clearScreen)
-		match doDate:
-			case True:
+		self.cls()
+		properlyFormated = False
+		while properlyFormated == False:
+			dateData = input("Please format as follows:\nMM/DD/YYYY\n")
+			try:
+				if dateData != "":
+					dateData = dateData.split("/")
+					date = datetime(int(dateData[2]), int(dateData[0]), int(dateData[1]))
+					properlyFormated = True
+				else:
+					date = datetime.now()
+					properlyFormated = True
+			except:
 				self.cls()
-				properlyFormated = False
-				while properlyFormated == False:
-					dateData = input("Please format as follows:\nMM/DD/YYYY\n")
-					try:
-						dateData = dateData.split("/")
-						date = datetime(int(dateData[2]), int(dateData[0]), int(dateData[1]))
-						properlyFormated = True
-					except:
-						self.cls()
-						print(f"{dateData} was not properly formated.")
-			case False:
-				date = datetime.now()
-		
+				print(f"{dateData} was not properly formated.")
+				
 		return date
 
 # Save and Load Functions
@@ -498,7 +505,8 @@ class ControllerInstance:
 			"File" : "Displays the location of the save file within file explorer.",
 			"Bal" : "Displays the balance of all accounts at the most recent instance. This information is also displayed when just displaying as normal.",
 			"Reload" : "Reloads all data, not saving the current data. This allows you to see any changes done to your finances.txt",
-			"Debug" : "[UNDER CONSTRUCTION] - Check codebase for access to what it's \"Supposed to do\""
+			"Debug" : "[UNDER CONSTRUCTION] - Check codebase for access to what it's \"Supposed to do\"",
+			"Autosave" : "Enables or Disables autosave when finishing a transaction",
 		}
 
 		keys = []
@@ -600,7 +608,11 @@ class ControllerInstance:
 
 		gb.COM_INSTANCE += 1
 		#this is the way of keeping track of the current instance of the program.
-		self.save()
+		self.cls()
+		if self.autosave:
+			self.save()
+		else:
+			print("Autosave is off, Be sure to save before leaving!\n\n")
 
 	"""
 		Withdraw money from specific accounts or containers based on user input

@@ -7,4 +7,9 @@ import datetime
 
 controller = ControllerInstance()
 
-print(controller.history[0])
+i = input("a, A, or b : ")
+match i:
+    case "a" or "A":
+        print("aahhhh")
+    case "b":
+        print("bhhh")
