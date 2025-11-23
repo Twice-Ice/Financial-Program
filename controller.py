@@ -55,7 +55,7 @@ class ControllerInstance:
 			case "edit":
 				self.edit()
 			case "save":#
-				self.save(saveAnimation = True)
+				self.save(saveAnimation = True, autosaveOverwrite = True)
 			case "load":#
 				self.load()
 			case "quit":#
@@ -318,51 +318,54 @@ class ControllerInstance:
 	"""
 		Saves the session data to the default file, only prompting the user to choose where to save if a default file hasn't been previously chosen already.
 	"""
-	def save(self, saveAnimation : bool = False):
-		saveData = ""
-		
-		#Items section identifier
-		saveData += "ITEMS\n"
+	def save(self, saveAnimation : bool = False, autosaveOverwrite : bool = False):
+		if self.autosave or autosaveOverwrite:
+			saveData = ""
+			
+			#Items section identifier
+			saveData += "ITEMS\n"
 
-		#accounts
-		for i in range(len(self.acctList.list)):
-			saveData += f"Account, {self.acctList.list[i].name}\n"
-		#containers
-		for i in range(len(self.contList.list)):
-			itemListStr = ""
-			#container's item list
-			for j in range(len(self.contList.list[i].itemList)):
-				itemListStr += f"{self.contList.list[i].itemList[j][0]}; {self.contList.list[i].itemList[j][1]}"
-				if j < len(self.contList.list[i].itemList) - 1:
-					itemListStr += ", "
-			#end result
-			saveData += f"Container, {self.contList.list[i].name}, {itemListStr}\n"
+			#accounts
+			for i in range(len(self.acctList.list)):
+				saveData += f"Account, {self.acctList.list[i].name}\n"
+			#containers
+			for i in range(len(self.contList.list)):
+				itemListStr = ""
+				#container's item list
+				for j in range(len(self.contList.list[i].itemList)):
+					itemListStr += f"{self.contList.list[i].itemList[j][0]}; {self.contList.list[i].itemList[j][1]}"
+					if j < len(self.contList.list[i].itemList) - 1:
+						itemListStr += ", "
+				#end result
+				saveData += f"Container, {self.contList.list[i].name}, {itemListStr}\n"
 
-		#Transactions section identifier
-		saveData += "TRANSACTIONS\n"
+			#Transactions section identifier
+			saveData += "TRANSACTIONS\n"
 
-		#loops through all transactions
-		for i in range(len(self.history)):
-			#and adds to saveData, the history instance's information. 
-			instance = self.history[i]
-			lineStr = ""
-			for j in range(len(instance)):
-				#how to handle instances where the item within the history instance is a datetime object as to avoid cases where the program crashes bcs oh no datetime to str doesn't exist DDDD:
-				item = str(instance[j]) if type(instance[j]) != datetime else instance[j].strftime("%m/%d/%y %H:%M:%S:%f")
-				lineStr += item
-				if j < len(instance) - 1:
-					lineStr += ", "
-			#adds the instance's information, separated by a new line.
-			saveData += f"{lineStr}\n"
-			#shows a percentage for how much of the file is saved.
-			self.cls()
+			#loops through all transactions
+			for i in range(len(self.history)):
+				#and adds to saveData, the history instance's information. 
+				instance = self.history[i]
+				lineStr = ""
+				for j in range(len(instance)):
+					#how to handle instances where the item within the history instance is a datetime object as to avoid cases where the program crashes bcs oh no datetime to str doesn't exist DDDD:
+					item = str(instance[j]) if type(instance[j]) != datetime else instance[j].strftime("%m/%d/%y %H:%M:%S:%f")
+					lineStr += item
+					if j < len(instance) - 1:
+						lineStr += ", "
+				#adds the instance's information, separated by a new line.
+				saveData += f"{lineStr}\n"
+				#shows a percentage for how much of the file is saved.
+				self.cls()
+				if saveAnimation:
+					print(f"{self.halfRound(((i+1)/len(self.history))*100, 1)} %")
+
+			#properly saves the data and prompts the user to press enter in order to get out of the save menu.
+			self.file.save(saveData)
 			if saveAnimation:
-				print(f"{self.halfRound(((i+1)/len(self.history))*100, 1)} %")
-
-		#properly saves the data and prompts the user to press enter in order to get out of the save menu.
-		self.file.save(saveData)
-		if saveAnimation:
-			print("Saved!\n")
+				print("Saved!\n")
+		else:
+			print("Autosave is off, Be sure to save before leaving!\n\n")
 
 	# Load
 	"""
@@ -581,7 +584,7 @@ class ControllerInstance:
 			try:
 				transactionID = int(self.history[len(self.history) - 1][0]) + 1
 			except:
-				transactionID = len(self.history)
+				transactionID = str(len(self.history))
 				print(f"There was an error when trying to set the ID of this transaction.\nThe most recent ID was not a valid integer. ({self.history[len(self.history)-1][0]})\nThe ID has been set as {len(self.history)}.")	
 
 			self.history.append([transactionID, date, transactionName, value * typeMult, itemName, notes])
@@ -609,10 +612,7 @@ class ControllerInstance:
 		gb.COM_INSTANCE += 1
 		#this is the way of keeping track of the current instance of the program.
 		self.cls()
-		if self.autosave:
-			self.save()
-		else:
-			print("Autosave is off, Be sure to save before leaving!\n\n")
+		self.save()
 
 	"""
 		Withdraw money from specific accounts or containers based on user input
@@ -1282,15 +1282,16 @@ class ControllerInstance:
 		#loops through all items in self.history to look for the ID they selected.
 		self.cls()
 		for item in self.history:
-			if item[0] == selectedID:
+			if str(item[0]) == selectedID:
 				editInstanceFunctions = {
 					"Date" : self.editInstanceDate,
 					"Name" : self.editInstanceName,
 					"Account" : self.WIP,
 					"Value" : self.editInstanceValue,
+					"Note" : self.editInstanceNote,
 				}
 
-				editInstanceFunctions[self.question(f"What would you like to edit about the instance {selectedID}?\n[Date, Name, Account, Value]\n", dict, editInstanceFunctions, clearScreen=True)](selectedID)
+				editInstanceFunctions[self.question(f"What would you like to edit about the instance {selectedID}?\n[Date, Name, Account, Value, Note]\n", dict, editInstanceFunctions, clearScreen=True)](selectedID)
 				return
 	
 	def editInstanceName(self, ID):
@@ -1337,6 +1338,20 @@ class ControllerInstance:
 					item[3] = sign * newItem
 					self.save()
 				return
+
+	def editInstanceNote(self, ID):
+			"""
+				## Edit Instance Note
+				Prompts the user to edit the note of the instance with {ID} and returns after doing so.
+
+				### ID : \n
+					ID of instance to be edited
+			"""
+			for item in self.history:
+				if item[0] == ID:
+					item[5] = self.question(f"What would you like the notes of ({ID}) called \"{item[2]}\" to?\nThe note is currently \"{item[5]}\"\n", str, clearScreen=True)
+					self.save()
+					return
 
 	# Dev Functions
 	"""
