@@ -7,6 +7,9 @@ from datetime import datetime
 
 controller = ControllerInstance()
 
+# DONT DELETE, EITHER COMMENT THIS OUT OR MAKE A NEW FILE, OR ACTUALLY IMPLEMENT THE SHIT IF YOU HAVE THE MOTIVATION.
+# it's a really cool skeleton of a function to estimate money spent on groceries and or other foods given a few keywords.
+
 comparisonDate = datetime(2025, 8, 28)
 today = datetime.now()
 

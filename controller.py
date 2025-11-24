@@ -18,7 +18,7 @@ class ControllerInstance:
 		self.IDGen = IDGenerator()
 		self.history = [] #[[ID, Date, TransactionName, Value, Account, Notes], etc.]
 		self.load()
-		self.autosave = True
+		self.autosave : bool = True
 		# self.autoCreate("account", "HRT")
 		# self.autoCreate("account", "personal")
 		# self.autoCreate("Account", "test")
@@ -31,9 +31,10 @@ class ControllerInstance:
 		# fakeItemList = Container("TestList")
 		# self.containerPercentage(fakeItemList)
 
-		command = input("\n\nWhat would you like to do?\n")
+		rawCommand : str = input("\n\nWhat would you like to do?\n")
+		command : list[str] = rawCommand.lower().split(" ")
 		self.cls()
-		match str.lower(command):
+		match command[0]:
 			case "help":
 				self.help()
 			case "deposit":#
@@ -74,12 +75,9 @@ class ControllerInstance:
 			case "debug":
 				self.enterDebugMode()
 			case "autosave":
-				self.cls()
-				self.autosave = not self.autosave
-				print(f"Autosave is now set to {self.autosave}.\n\n")
+				self.autosaveCommand(command)
 			case _:
-				print(f"{command} is not a valid option! Type help to see all available commands.")
-
+				print(f"{rawCommand} is not a valid option! Type help to see all available commands.")
 
 
 # Misc Help Functions
@@ -183,6 +181,47 @@ class ControllerInstance:
 		else:
 			self.cls()
 			print("Reload canceled.")
+
+	"""
+		Autosave command for the user's interactions when setting or viewing the autosave.
+
+		This command has multiple options, 
+		"autosave" (default) just toggling the autosave bool.
+		"autosave set True/False" setting the specific bool.
+		"autosave view" displaying the current autosave setting.
+
+		This is also a test function to see if I can actually code using a command that has multiple options lol
+	"""
+	def autosaveCommand(self, command : list[str]) -> None:
+		self.cls()
+		def nonValid():
+			rawCommand = ""
+			for i in command:
+				rawCommand += i + " "
+			print(f"{rawCommand} is not a valid option! Type help to see details on autosave function.")
+			return
+
+		if len(command) == 1:
+			self.autosave = not self.autosave
+			print(f"Autosave is now set to {self.autosave}.\n\n")
+		else:
+			if command[1] == "set":
+				if len(command) == 3:
+					if command[2] == "true":
+						self.autosave = True
+						print(f"Autosave is now set to {self.autosave}.\n\n")
+					elif command[2] == "false":
+						self.autosave = False
+						print(f"Autosave is now set to {self.autosave}.\n\n")
+					else:
+						nonValid()
+				else:
+					nonValid()
+			elif command[1] == "view":
+				print(f"Autosave is currently set to {self.autosave}.\n\n")
+			else:
+				nonValid()
+
 
 	# Addaptive Question Functions
 	"""
@@ -509,7 +548,10 @@ class ControllerInstance:
 			"Bal" : "Displays the balance of all accounts at the most recent instance. This information is also displayed when just displaying as normal.",
 			"Reload" : "Reloads all data, not saving the current data. This allows you to see any changes done to your finances.txt",
 			"Debug" : "[UNDER CONSTRUCTION] - Check codebase for access to what it's \"Supposed to do\"",
-			"Autosave" : "Enables or Disables autosave when finishing a transaction",
+			"Autosave" : "set the autosave to True or false.\n\nThere are multiple options:\n"+
+						"1) \"autosave\" (default), sets autosave to the opposite of what it was previously\n"+
+						"2) \"autosave view\", allows you to view what autosave is currently set to\n"+
+						"3) \"autosave set True/False\", allows you to set autosave to specifically true or false.",
 		}
 
 		keys = []
