@@ -76,6 +76,8 @@ class ControllerInstance:
 				self.enterDebugMode()
 			case "autosave":
 				self.autosaveCommand(command)
+			case "search":
+				self.search(command)
 			case _:
 				print(f"{rawCommand} is not a valid option! Type help to see all available commands.")
 
@@ -222,7 +224,6 @@ class ControllerInstance:
 			else:
 				nonValid()
 
-
 	# Addaptive Question Functions
 	"""
 		Prompts the user with a yes or no question. The user can always press enter to just use the default option.
@@ -233,8 +234,8 @@ class ControllerInstance:
 		print(_leadingMessage)
 		command = input(questionStr)
 		try:
-			command = command.lower()
-			match command:
+			command = command
+			match command.lower()[0:1]:
 				case "y":
 					return True
 				case "n":
@@ -252,7 +253,9 @@ class ControllerInstance:
 	"""
 		asks the user a question, along with a list of possible answer options. 
 		Then if the user says something that isn't an option, the question is asked again, otherwise, the user's answer is returned.
-
+		*** DOES NOT automatically include the answer options in the question. ***
+		
+		answerType is the way that the user is answering. (eg. str: returns the string the user inputed; list: returns a chosen item from the answerOptions list)
 		default is the default answer option
 
 		Int or Float answerOptions:
@@ -260,21 +263,21 @@ class ControllerInstance:
 			[[str : operation, int/float : comparisonValue], [etc.]]
 			No settings defaults to no comparison, and only checks if the value is a valid input for the selected answer type.
 	"""
-	def question(self, questionStr : str, answerType : any, answerOptions : list = [],  default : any = None, clearScreen : bool = False, firstInstanceCall : bool = True) -> any:
+	def question(self, questionStr : str, answerType : any, answerOptions : list = [],  default : any = None, clearScreen : bool = False, _firstInstanceCall : bool = True) -> any:
 		if clearScreen:
 			self.cls()
 
 		command = input(questionStr)
 
 		#so that the user is always a line down and corrects the dev's mistake
-		if firstInstanceCall:
+		if _firstInstanceCall:
 			if questionStr[len(questionStr)-2:len(questionStr)] != "\n":
 				questionStr += "\n"
 
 		def fail(qStr, aType, aOptions, failMsg : str = f"{command} is not a valid option.\n\n"):
 			self.cls()
 			print(failMsg)
-			return self.question(qStr, aType, aOptions, firstInstanceCall = False)
+			return self.question(qStr, aType, aOptions, _firstInstanceCall = False)
 
 		try:
 			#default answer option
@@ -854,7 +857,6 @@ class ControllerInstance:
 			container.itemList = definePercentagesList(1, container.itemList)
 
 	# Display Functions
-
 	"""
 		Prints all containers and accounts stored within the current instance of the application.
 
@@ -1213,6 +1215,62 @@ class ControllerInstance:
 				#fails the users' prompt if there was no ID that matched the ID they selected.
 				self.question(f"The ID you selected ({selectedID}) is not a valid ID, please choose again.\nENTER TO CONTINUE", str, clearScreen=True)
 				self.view("notes")
+
+	def search(self, command : str = None):
+		self.cls()
+		print("You are now in the search mode, type \"Quit\" at any point to leave this mode.\n\n")
+		definedSettings : bool = False
+		definedRange : bool = False
+		definedKeywords : bool = False
+		definedOutliers : bool = False
+		keywords : list[str] = []
+		outliers : list = []
+		def printSettings():
+			self.cls()
+			print(f"You have set the range/dates of your search to be from {None} to {None},")
+			print(f"You have set the keywords to be {(keyword + ", " for keyword in keywords)},")
+			print(f"You have set the outliers in the table to be {(outlier.id + "; " + outlier.shortenedName + "\n" for outlier in outliers)}") #put the outlier and it's shortened name here and append them as a list.
+			print("\n")
+		
+		while not definedSettings:
+			if definedRange == False:
+				definedRange = self.yesNo("defined range?")
+			while not definedKeywords:
+
+				self.cls()
+				print(f"You have set the keywords to be {(keyword + ", " for keyword in keywords)}\n")
+				keyword = self.question("Input a keyword : \n(/all for all)", str)
+				match keyword:
+					case "/all":
+						keywords.append("")
+					case _:
+						keywords.append(keyword)
+
+				#WHERE TO PICK UP FROM LAST TIME (11/24)
+				#in temp there is a function to remove all duplicates from a list of strings. 
+				#in this section here (defined keywords), you need to remove all duplicate keywords, and then confirm with the user if they are done with keywords or not.
+
+			if definedOutliers == False:
+				definedOutliers = self.yesNo("defined outliers?", False)
+
+			if definedRange and definedKeywords and definedOutliers:
+				printSettings()
+				okWithSettings : bool = self.yesNo("Are you ok with these settings? (y/n)", False, False)
+				match okWithSettings:
+					case True:
+						definedSettings = True
+						break
+					case False:
+						printSettings()
+						redefine = self.question(f"What would you like to re-set?\n(Range/Keywords/Outliers)\n\n", list, ["Range", "Keywords", "Outliers"], None, True).lower()
+						match redefine:
+							case "range":
+								definedRange = False
+							case "keywords":
+								definedKeywords = False
+							case "outliers":
+								definedOutliers = False
+		
 
 	# Edit Data Functions
 	"""
