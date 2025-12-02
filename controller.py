@@ -61,7 +61,7 @@ class ControllerInstance:
 				self.load()
 			case "quit":#
 				print("Have a good one!\n\n")
-				self.save()
+				self.save(autosaveOverwrite=True)
 				gb.DOEXIT = True
 			case "file":
 				print(self.file.filePath, self.file.metaPath)
@@ -225,12 +225,11 @@ class ControllerInstance:
 				nonValid()
 
 	# Addaptive Question Functions
-	"""
-		Prompts the user with a yes or no question. The user can always press enter to just use the default option.
-	"""
 	def yesNo(self, questionStr, clearScreen : bool = True, default : bool|None = True, _leadingMessage : str = "") -> bool:
-		if clearScreen:
-			self.cls()
+		"""
+			Prompts the user with a yes or no question. The user can always press enter to just use the default option.
+		"""
+		if clearScreen: self.cls()
 		print(_leadingMessage)
 		command = input(questionStr)
 		try:
@@ -250,20 +249,20 @@ class ControllerInstance:
 		except:
 			return self.yesNo(questionStr, default=default, _leadingMessage=f"{command} is not a valid option, please try again.\n")
 
-	"""
-		asks the user a question, along with a list of possible answer options. 
-		Then if the user says something that isn't an option, the question is asked again, otherwise, the user's answer is returned.
-		*** DOES NOT automatically include the answer options in the question. ***
-		
-		answerType is the way that the user is answering. (eg. str: returns the string the user inputed; list: returns a chosen item from the answerOptions list)
-		default is the default answer option
-
-		Int or Float answerOptions:
-			[str : operation, int/float : comparisonValue]
-			[[str : operation, int/float : comparisonValue], [etc.]]
-			No settings defaults to no comparison, and only checks if the value is a valid input for the selected answer type.
-	"""
 	def question(self, questionStr : str, answerType : any, answerOptions : list = [],  default : any = None, clearScreen : bool = False, _firstInstanceCall : bool = True) -> any:
+		"""
+			asks the user a question, along with a list of possible answer options.\n
+			Then if the user says something that isn't an option, the question is asked again, otherwise, the user's answer is returned.\n
+			***DOES NOT automatically include the answer options in the question.***\n\n
+			
+			answerType is the way that the user is answering. (eg. str: returns the string the user inputed; list: returns a chosen item from the answerOptions list)\n
+			default is the default answer option
+
+			Int or Float answerOptions:\n
+			- [str \: operation, int/float \: comparisonValue]\n
+			- [[str \: operation, int/float \: comparisonValue], [etc.]]\n
+			- No settings defaults to no comparison, and only checks if the value is a valid input for the selected answer type.
+		"""
 		if clearScreen:
 			self.cls()
 
@@ -275,7 +274,7 @@ class ControllerInstance:
 				questionStr += "\n"
 
 		def fail(qStr, aType, aOptions, failMsg : str = f"{command} is not a valid option.\n\n"):
-			self.cls()
+			if clearScreen: self.cls()
 			print(failMsg)
 			return self.question(qStr, aType, aOptions, _firstInstanceCall = False)
 
@@ -336,22 +335,19 @@ class ControllerInstance:
 
 	# Misc Question Functions
 	def getDate(self, clearScreen : bool = True):
-		self.cls()
+		"""
+			Prompts the user to choose a date, leading zeros are ignored.
+		"""
+		if clearScreen: self.cls()
 		properlyFormated = False
 		while properlyFormated == False:
-			dateData = input("Please format as follows:\nMM/DD/YYYY\n")
-			try:
-				if dateData != "":
-					dateData = dateData.split("/")
-					date = datetime(int(dateData[2]), int(dateData[0]), int(dateData[1]))
-					properlyFormated = True
-				else:
-					date = datetime.now()
-					properlyFormated = True
-			except:
+			date = input("Please format as follows:\nMM/DD/YYYY\n")
+			date = self.strToDate(date)
+			if date:
+				properlyFormated = True
+			else:
 				self.cls()
-				print(f"{dateData} was not properly formated.")
-				
+				print(f"{date} was not properly formated.")				
 		return date
 
 # Save and Load Functions
@@ -1216,61 +1212,191 @@ class ControllerInstance:
 				self.question(f"The ID you selected ({selectedID}) is not a valid ID, please choose again.\nENTER TO CONTINUE", str, clearScreen=True)
 				self.view("notes")
 
-	def search(self, command : str = None):
+	def search(self, keywordEntry : str = None):
 		self.cls()
-		print("You are now in the search mode, type \"Quit\" at any point to leave this mode.\n\n")
+		userDoneWithSearch : bool = False
 		definedSettings : bool = False
 		definedRange : bool = False
+		startPointDefined : bool = False
+		endPointDefined : bool = False
+		startPoint : datetime|int = None
+		endPoint : datetime|int = None
 		definedKeywords : bool = False
 		definedOutliers : bool = False
 		keywords : list[str] = []
 		outliers : list = []
-		def printSettings():
-			self.cls()
-			print(f"You have set the range/dates of your search to be from {None} to {None},")
-			print(f"You have set the keywords to be {(keyword + ", " for keyword in keywords)},")
+		def pointInHistory(questionStr : str) -> datetime|int:
+					self.cls()
+					validAnswer : bool = False
+					while not validAnswer:
+						inputedPoint = input(questionStr)
+						if len(inputedPoint.split("/")) != 1:
+							point = self.strToDate(inputedPoint)
+							if point:
+								if (point-datetime(2000, 1, 1)).days < 0:
+									self.cls()
+									print(f"{inputedPoint} is too early of a date, please enter a date later than 1/1/2000.")
+								else:
+									validAnswer = True
+							else:
+								self.cls()
+								print(f"{inputedPoint} is not a valid answer!")
+						elif inputedPoint.lower() == "today" or inputedPoint.lower() == "now":
+							point = datetime.now()
+							validAnswer = True
+						elif inputedPoint.lower() == "start":
+							point = self.history[0][1]
+							validAnswer = True
+						else:
+							try:
+								point = int(inputedPoint)
+								validAnswer = True
+							except:
+								self.cls()
+								print(f"{inputedPoint} is not a valid answer!")
+					return point
+		def pointToStr(point : datetime|int) -> str:
+			try:
+				return str(int(point))
+			except:
+				return str(point.strftime("%m/%d/%y"))
+		def listToStr(L, divider : str = ", "):
+			returnStr = ""
+			for index in L:
+				returnStr += str(index) + divider
+			return returnStr
+		def keywordsToStr() -> str: return f"You have set the keywords to be:\n[\n{listToStr(keywords, ",\n")}]\n"
+		def printSettings(clearScreen : bool = True):
+			if clearScreen: self.cls()
+			print(f"You have set the range/dates of your search to be from {pointToStr(startPoint)} to {pointToStr(endPoint)},")
+			print(keywordsToStr(), end="")
 			print(f"You have set the outliers in the table to be {(outlier.id + "; " + outlier.shortenedName + "\n" for outlier in outliers)}") #put the outlier and it's shortened name here and append them as a list.
 			print("\n")
 		
-		while not definedSettings:
-			if definedRange == False:
-				definedRange = self.yesNo("defined range?")
-			while not definedKeywords:
+		while not userDoneWithSearch:
+			#define settings
+			definedSettings = definedRange and definedKeywords and definedOutliers
+			while not definedSettings:
+				while not definedRange:
+					questionString = "Please enter the start point of your search range.\n(MM/DD/YYYY, or index #, or \"today\"/\"now\", or \"start\" are valid options)\n : "
+					if not startPointDefined:
+						if endPointDefined: questionString = f"Your end point is {pointToStr(endPoint)}.\n\n" + questionString
+						startPoint : datetime|int = pointInHistory(questionString)
+						startPointDefined = True
+					if not endPointDefined:
+						endPoint : datetime|int = pointInHistory(f"Your start point is {pointToStr(startPoint)}.\n\n" + questionString)
+						endPointDefined = True
+					if self.yesNo(f"Are the start point \"{pointToStr(startPoint)}\"\nand the end point \"{pointToStr(endPoint)}\" correct?\n\n : "):
+						definedRange = True
+					else:
+						match self.question(f"Would you like to edit the start point \"{pointToStr(startPoint)}\", the end point \"{pointToStr(endPoint)}\", or both?\n(Start/End/Both)\n\n : ", list, ["start", "end", "both"], clearScreen = True):
+							case "start":
+								startPointDefined = False
+							case "end":
+								endPointDefined = False
+							case "both":
+								startPointDefined = False
+								endPointDefined = False
+				while not definedKeywords:
+					self.cls()
+					print(keywordsToStr())
+					keywordEntry = self.question("Input a keyword : \n(\"/all\" for all entries)\n(\"/remove KEYWORD\" to remove a keyword)\n(\"/reset\" to reset all keywords)\n(add an \"/-\" to the END of a keyword to make it an anti-keyword that is removed from the search.)\n(\"/done\" when finished with keywords)\n\n : ", str)
+					match keywordEntry.lower().split(" ")[0]:
+						case "/done":
+							self.cls()
+							definedKeywords = True
+						case "/all":
+							keywords.append("")
+						case "/remove":
+							removalIndexes : list[int] = []
+							if keywordEntry.lower()[8:len(keywordEntry)] == "/all":
+								for i in range(len(keywords)):
+									if keywords[i].lower() == "":
+										removalIndexes.append(i)
+							else:
+								for i in range(len(keywords)):
+									if keywords[i].lower() == keywordEntry.lower()[8:len(keywordEntry)]:
+										removalIndexes.append(i)
+							removalIndexes.sort()
+							while len(removalIndexes) != 0:
+								index = removalIndexes.pop()
+								keywords = keywords[0:index] + keywords[index+1:len(keywords)]
+						case "/reset":
+							keywords = []
+						case _:
+							keywords.append(keywordEntry)
+					keywords = self.stringListDuplicateRemove(keywords)
+				if definedOutliers == False:
+					definedOutliers = self.yesNo("defined outliers?", default = False)
 
-				self.cls()
-				print(f"You have set the keywords to be {(keyword + ", " for keyword in keywords)}\n")
-				keyword = self.question("Input a keyword : \n(/all for all)", str)
-				match keyword:
-					case "/all":
-						keywords.append("")
-					case _:
-						keywords.append(keyword)
-
-				#WHERE TO PICK UP FROM LAST TIME (11/24)
-				#in temp there is a function to remove all duplicates from a list of strings. 
-				#in this section here (defined keywords), you need to remove all duplicate keywords, and then confirm with the user if they are done with keywords or not.
-
-			if definedOutliers == False:
-				definedOutliers = self.yesNo("defined outliers?", False)
-
-			if definedRange and definedKeywords and definedOutliers:
+				if definedRange and definedKeywords and definedOutliers:
+					printSettings()
+					match self.yesNo("Are you ok with these settings?\n", False, False):
+						case True:
+							definedSettings = True
+						case False:
+							printSettings()
+							match self.question(f"What would you like to re-set?\n(Range/Keywords/Outliers)\n\n", list, ["Range", "Keywords", "Outliers"], None, True).lower():
+								case "range":
+									definedRange = False
+								case "keywords":
+									definedKeywords = False
+								case "outliers":
+									definedOutliers = False
+			#define which indexes of self.history meet the settings' criteria
+			inList = []
+			for instance in self.history:
+				name : str = instance[2].lower()
+				date : datetime = instance[1]
+				if (startPoint - date).days <= 0 and (date - endPoint).days <= 0:
+					for keywordEntry in keywords:
+						if name.find(keywordEntry) != -1:
+							inList.append(instance)
+			#removes all anti-keywords
+			i = len(inList)
+			while i >= 0:
+				i -= 1
+				for keywordEntry in keywords:
+					if keywordEntry[-2:len(keywordEntry)] == "/-":
+						if inList[i][2].find(keywordEntry[:-2]) != -1:
+							inList = inList[0:i] + inList[i+1:len(inList)]
+			#calculate earnings/spendings of all those indexes which meet the settings' criteria
+			totalEarned = 0
+			totalSpent = 0
+			totalSum = 0
+			for instance in inList:
+				totalSum += instance[3]
+				if instance[3] < 0:
+					totalSpent += abs(instance[3])
+				else:
+					totalEarned += abs(instance[3])
+			#print data
+			self.cls()
+			print(f"Total days: {(endPoint - startPoint).days}")
+			if totalEarned > 0:
+				print(f"Total earned: {self.floatToDollar(totalEarned)}")
+				print(f"Average earned per day: {self.floatToDollar(totalEarned/(endPoint-startPoint).days)}")
+				print(f"Average earned per month: {self.floatToDollar(totalEarned/(endPoint-startPoint).days*(365.25/12))}")
+				print(f"Average earned per year: {self.floatToDollar(totalEarned/(endPoint-startPoint).days*365.25)}")
+			if totalSpent > 0:
+				print(f"Total spent: {self.floatToDollar(abs(totalSpent))}")
+				print(f"Average spent per day: {self.floatToDollar(totalSpent/(endPoint-startPoint).days)}")
+				print(f"Average spent per month: {self.floatToDollar(totalSpent/(endPoint-startPoint).days*(365.25/12))}")
+				print(f"Average spent per year: {self.floatToDollar(totalSpent/(endPoint-startPoint).days*365.25)}")
+			print(f"Total sum: {self.floatToDollar(totalSum)}")
+			#is the user done with their search?
+			printSettings(clearScreen=False)
+			if self.yesNo("Would you like to continue your search (ie. editing your search queries)?\n\n : ", False, None):
 				printSettings()
-				okWithSettings : bool = self.yesNo("Are you ok with these settings? (y/n)", False, False)
-				match okWithSettings:
-					case True:
-						definedSettings = True
-						break
-					case False:
-						printSettings()
-						redefine = self.question(f"What would you like to re-set?\n(Range/Keywords/Outliers)\n\n", list, ["Range", "Keywords", "Outliers"], None, True).lower()
-						match redefine:
-							case "range":
-								definedRange = False
-							case "keywords":
-								definedKeywords = False
-							case "outliers":
-								definedOutliers = False
-		
+				match self.question(f"What would you like to edit?\n(Range/Keywords/Outliers)\n\n", list, ["Range", "Keywords", "Outliers"], None, True).lower():
+					case "range":
+						definedRange = False
+					case "keywords":
+						definedKeywords = False
+					case "outliers":
+						definedOutliers = False
+			else:
+				userDoneWithSearch = True
 
 	# Edit Data Functions
 	"""
@@ -1509,6 +1635,48 @@ class ControllerInstance:
 		self.WIP()
 		"""This is supposed to create a whole new file for the user to mess around in instead of fucking around with the files manually.
 		This allows for the user to test things out and ideas without fucking up their normal financial system."""
+
+	def stringListDuplicateRemove(self, L : list[str]) -> list[str]:
+		"""
+			Removes all duplicate entries from a list of strings while maintaining the position of the first entry. for example: ["a", "b", "A"] -> ["a", "b"]\n
+			***not case sensitive***\n
+			L : your list
+		"""
+		removalIndexes : list[int] = []
+		for i in range(len(L)): #lowercase everything so that there isn't any bugs when indexing for a lower (when there might have instead have been an upercase str)
+			L[i] = L[i].lower()
+		for i in range(len(L)):
+			if i != L.index(L[i].lower()):
+				removalIndexes.append(i)
+		removalIndexes.sort()
+		while len(removalIndexes) != 0:
+			index = removalIndexes.pop()
+			L = L[0:index] + L[index+1:len(L)]
+		return L
+
+	def strToDate(self, date : str) -> datetime|bool:
+		"""
+			Converts a string to a date, if properly formated, then a datetime object is returned, if not, False is returned.
+		"""
+		try:
+			date = date.split("/")
+			if len(date) == 3:
+				return datetime(int(date[2]), int(date[0]), int(date[1]))
+			else:
+				return False
+		except:
+			return False
+
+	def floatToDollar(self, num : float|int) -> str:
+		num = self.halfRound(float(num), 2)
+		num = str(num).split(".")
+		num[1] = num[1] + "0" * (2-len(num[1]))
+		return f"{num[0]}.{num[1]}"
+
+	def halfRound(self, val: float, n_digits: int = 0):
+		val *= 10 ** n_digits
+		result = int(val + (0.50002 if val >= 0 else -0.50002))
+		return result / 10 ** n_digits if n_digits != 0 else int(result / 10)
 
 	#WIP Functions
 	def remove(self):
